@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Form</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        .radio-group,
+        .checkbox-group {
+            margin-top: 10px;
+        }
+        .radio-option,
+        .checkbox-option {
+            margin-bottom: 8px;
+        }
+        .radio-option label,
+        .checkbox-option label {
+            display: inline;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 20px auto 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .required:after {
+            content: " *";
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Account Registration</h1>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="firstName" class="required">First Name</label>
+                <input type="text" id="firstName" name="firstName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="lastName" class="required">Last Name</label>
+                <input type="text" id="lastName" name="lastName" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email" class="required">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password" class="required">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirmPassword" class="required">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" placeholder="(xxx) xxx-xxxx">
+            </div>
+            
+            <div class="form-group">
+                <label for="dateOfBirth">Date of Birth</label>
+                <input type="text" id="dateOfBirth" name="dateOfBirth" placeholder="MM/DD/YYYY">
+            </div>
+            
+            <div class="form-group">
+                <label for="country" class="required">Country</label>
+                <select id="country" name="country" required>
+                    <option value="">Select Country</option>
+                    <option value="us">United States</option>
+                    <option value="ca">Canada</option>
+                    <option value="mx">Mexico</option>
+                    <option value="uk">United Kingdom</option>
+                    <option value="au">Australia</option>
+                    <option value="jp">Japan</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>Gender</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="male" name="gender" value="male">
+                        <label for="male">Male</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="female" name="gender" value="female">
+                        <label for="female">Female</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="nonBinary" name="gender" value="nonBinary">
+                        <label for="nonBinary">Non-binary</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="preferNotToSay" name="gender" value="preferNotToSay">
+                        <label for="preferNotToSay">Prefer not to say</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Interests (select all that apply)</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="technology" name="interests" value="technology">
+                        <label for="technology">Technology</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="sports" name="interests" value="sports">
+                        <label for="sports">Sports</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="music" name="interests" value="music">
+                        <label for="music">Music</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="art" name="interests" value="art">
+                        <label for="art">Art</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="cooking" name="interests" value="cooking">
+                        <label for="cooking">Cooking</label>
+                    </div>
+                    <div class="checkbox-option">
+                        <input type="checkbox" id="travel" name="interests" value="travel">
+                        <label for="travel">Travel</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="bio">About Yourself</label>
+                <textarea id="bio" name="bio" placeholder="Tell us something about yourself..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-option">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms" class="required">I agree to the Terms and Conditions</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-option">
+                    <input type="checkbox" id="newsletter" name="newsletter">
+                    <label for="newsletter">Subscribe to our newsletter</label>
+                </div>
+            </div>
+            
+            <button type="submit">Register</button>
+        </form>
+    </div>
+</body>
+</html>

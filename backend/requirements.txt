@@ -1,0 +1,10 @@
+# backend/requirements.txt
+fastapi==0.95.0
+uvicorn==0.21.1
+pydantic==1.10.7
+beautifulsoup4==4.11.2
+requests==2.28.2
+python-multipart==0.0.6
+langchain==0.0.235
+openai==0.27.8
+python-dotenv==1.0.0

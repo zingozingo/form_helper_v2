@@ -1,0 +1,146 @@
+[
+  {
+    "test_number": 1,
+    "description": "Basic email field explanation",
+    "question": "What is this field for?",
+    "field_context": {
+      "name": "email",
+      "type": "email"
+    },
+    "form_type": null,
+    "response": "This field is for your email address, which is used for account creation, login credentials, and communications from the service. Enter a valid email in the format username@domain.com Essential for digital communication and account recovery. Your email often serves as your primary identifier and will be used for important notifications. Common mistakes to avoid: Using an invalid format, typos in domain names, using temporary emails for permanent accounts.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.00013017654418945312,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 2,
+    "description": "Basic password security question",
+    "question": "Is this secure?",
+    "field_context": {
+      "name": "password",
+      "type": "password"
+    },
+    "form_type": null,
+    "response": "This field is for your password, which secures your account from unauthorized access. Create a strong password with at least 8 characters, including uppercase and lowercase letters, numbers, and special characters. Your password should never be shared and should be unique to this service. Common mistakes to avoid: Using common words, reusing passwords across sites, using personal information that's easy to guess.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.00018215179443359375,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 3,
+    "description": "Purpose of confirmation field",
+    "question": "Why do I need to confirm my password?",
+    "field_context": {
+      "name": "confirm_password",
+      "type": "password"
+    },
+    "form_type": "registration",
+    "response": "This field verifies that you've correctly entered your intended password by typing it a second time. Common mistakes to avoid: Typing a different password, forgetting capital letters or special characters from the original password.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.0005121231079101562,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 4,
+    "description": "Field relationship question",
+    "question": "What's the difference between username and email?",
+    "field_context": {
+      "name": "username",
+      "type": "text"
+    },
+    "form_type": "registration",
+    "response": "This field is for your chosen username, which identifies you in the system and may be visible to other users. Create a unique username following the specified rules (letters, numbers, and sometimes special characters). Your primary identifier for logging in and may be visible in public areas of the service. Common mistakes to avoid: Using personal information that reveals your identity, choosing common names that are already taken.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.0004978179931640625,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 5,
+    "description": "Form process question",
+    "question": "What happens if I forget my password?",
+    "field_context": null,
+    "form_type": "registration",
+    "response": "1. Purpose of Registration Forms: Registration forms are commonly used by websites, apps, and online services to create a new user account. They collect basic information to identify you and often set up security measures like a password for your account. The purpose is to create a unique digital identity for you, which lets you gain personalized access to the service, and allows the service to manage its user base.\n\n2. Key Information Requested: \n   - Email: Your email address is needed for communication, account verification, and in case you need to reset your password. \n   - Username: This is your unique identifier on the platform. It's how you'll log in and be identified in the system.\n   - Password & Confirm Password: These fields are for setting up your account security. You need to enter the same password in both fields to ensure it's correct.\n   - First & Last Name: These are usually used for personalization, such as addressing you by your name in messages.\n   - Date of Birth (DOB): This information is typically used to verify your age, ensuring you're old enough to use the service if it has age restrictions.\n   - Agree Terms: This is where you acknowledge and agree to the terms of service or user agreement of the platform. \n\n3. Information Handling: After submission, your information is stored securely in the service's user database. It's used to manage your account, personalize your experience, and communicate with you. Some services may use your information for other purposes outlined in their Privacy Policy.\n\n4. Important Considerations: Always ensure you read and understand the terms of service before agreeing. Check that the website is secure (https:// in the URL) before submitting personal information. Required fields are usually marked with an asterisk (*) and must be filled to complete registration.\n\n5. Best Practices: Use a unique, strong password and keep it secure. Be accurate with your personal information for a smooth user experience. Regularly update your password for added security.\n\nYour Specific Question: If you forget your password, there's usually a 'Forgot Password' or 'Reset Password' option on the login page. Clicking this will typically prompt the service to send a password reset link to your registered email address. From there, you can create a new password and regain access to your account.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 19.521234035491943,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 6,
+    "description": "Form security question",
+    "question": "How secure is this registration form?",
+    "field_context": null,
+    "form_type": "registration",
+    "response": "1. Purpose of Registration Forms:\nRegistration forms are typically used to create a new account on a website or application. This allows the site to remember your information and preferences, provide a personalized experience, and often enables access to specific features or services.\n\n2. Key Information Requested:\n- `Email`: This is needed for communication purposes, such as sending account details, updates, or notifications. It's also often used for account recovery if you forget your password.\n- `Username`: This unique identifier is how you'll log into the site and may be visible to other users if it's a community-based site.\n- `Password` and `Confirm Password`: These fields are for setting and verifying your account's password. This is part of your login credentials to ensure account security.\n- `First Name` and `Last Name`: These are collected to personalize your user experience.\n- `Date of Birth (DOB)`: This is generally asked to verify you are old enough to use the service, as certain age restrictions may apply.\n- `Agree to Terms`: This is a legal requirement where you acknowledge understanding and agreeing to the site's terms and conditions and privacy policy.\n\n3. Information Handling:\nAfter submission, your information is typically stored in the site's secure database. It is used to manage your account, personalize your experience, and send relevant communications. The specific handling of your data should be outlined in the site's privacy policy.\n\n4. Important Considerations:\nMake sure that all the information you provide is accurate and up-to-date. Ensure you read and understand the terms and conditions before agreeing to them. Pay close attention to required vs. optional fields\u2014only the required fields need to be filled out to register.\n\n5. Best Practices:\nChoose a strong, unique password and don't share it with anyone. Be cautious about where and when you log in\u2014avoid using public computers or unsecured networks to access your account. Regularly update your password for added security.\n\nIn regards to your question about the security of the form, that largely depends on the specific website or application. A secure registration form should use HTTPS protocol to ensure data is encrypted during transmission. Additionally, the site should store passwords in a hashed or encrypted format. Look for a small padlock icon in the address bar\u2014this indicates that the site is secure. However, even with these measures, no system is completely secure, so it's important to regularly update your passwords and monitor your account for any suspicious activity.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 22.321221113204956,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 7,
+    "description": "Format guidance",
+    "question": "Where do I find my CVV code?",
+    "field_context": {
+      "name": "cvv",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "This field is for your card verification value (CVV), a security code that helps verify you have physical possession of the card. Enter the 3 or 4 digit security code found on the back (or front for American Express) of your card. A security measure to prevent fraud in card-not-present transactions. Common mistakes to avoid: Looking for a 3-digit code on the front instead of the back, confusing CVV with PIN.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.0004820823669433594,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 8,
+    "description": "Security concern",
+    "question": "Is it safe to enter my credit card here?",
+    "field_context": {
+      "name": "card_number",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "1. What typically happens with this information after submission: Your card number is typically used to process your payment for a product or service. After submission, the number should be encrypted and stored securely. In many cases, only the last four digits of your card number are visible to customer service representatives or other staff.\n\n2. Common ways this data might be used or shared: The primary purpose of this data is to process your payment. Businesses generally do not share your credit card information with third parties unless it's necessary for completing a transaction, such as sharing with a payment processor. However, practices can vary, so it's important to check the specific privacy policy of the organization.\n\n3. Industry-standard privacy practices for this type of information: The Payment Card Industry Data Security Standard (PCI DSS) is a set of security standards designed to ensure that all companies that accept, process, store or transmit credit card information maintain a secure environment. You should verify that the entity asking for your credit card number is PCI DSS compliant.\n\n4. Potential concerns to be aware of: Fraudulent activities and data breaches are potential risks when sharing your credit card information. Therefore, it\u2019s crucial to ensure that the website is secure (shown by HTTPS in the website address) and has a strong reputation. \n\n5. Questions you might consider asking the organization: You might want to ask about their data security measures, whether they are PCI DSS compliant, how they store your card information, how long they retain this information, and if they share it with any third parties.\n\nIn summary, while it's generally safe to enter your card number in forms from reputable sources that follow industry standards, you should always take precautions and make sure you understand the organization's privacy practices.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 14.72687292098999,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 9,
+    "description": "Purpose explanation",
+    "question": "Why do you need my billing address?",
+    "field_context": {
+      "name": "billing_address",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "1. Usage in Payment Forms: The \"billing_address\" field is typically used in payment forms to identify the address associated with the credit card, debit card, or other payment method you are using to make a purchase. It's a standard part of the payment verification process.\n\n2. Expected Format: This field typically expects a full postal address, including a street number and name, suite or apartment if applicable, city, state or province, country, and postal code. For example, \"123 Main St, Apartment 4B, New York, NY, USA, 10001\".\n\n3. Reason for Collection: Your billing address is collected to validate that the payment method you're using is authorized and corresponds to your location. It's also used to prevent fraud by cross-checking it with the address on file with your bank or credit card company. \n\n4. Privacy and Security Considerations: Any information you enter into a payment form, including your billing address, should be transmitted securely to prevent unauthorized access. Make sure the website uses HTTPS for secure data transmission. Be cautious about sharing this information if you're unsure about the website's authenticity or security practices.\n\n5. Common Mistakes: Avoid entering a different address from the one your bank has on file. This discrepancy could lead to transaction failure or delays. Also, ensure that your address is correctly spelled and formatted to avoid any complications.\n\nRemember, even though this field is not marked as required, providing your billing address can help ensure a smooth transaction process, especially for large purchases or orders that require extra verification.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 12.31046199798584,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 10,
+    "description": "Field relationship",
+    "question": "What's the relationship between my card number and CVV?",
+    "field_context": {
+      "name": "card_number",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "Sure, let's dive into the details of the \"card_number\" field.\n\n1. Specific Purpose: The 'card_number' field is designed to collect your credit or debit card number. This is a critical part of payment processing forms as it allows the form's recipient (usually a business or financial institution) to charge the specified amount to your card. \n\n2. Structure of Information: Credit or debit card numbers are typically 16 digits long, structured in four groups of four digits. This is a standard structure set by card issuers and financial institutions to maintain uniformity and ease of use. Each group of digits plays a specific role, such as identifying the card issuer, your account number, etc.\n\n3. Correct Response Formatting: When entering your card number, ensure that you type in all the digits without spaces or dashes. It's important to double-check this information as any error can lead to transaction failure. \n\n4. Common Errors and Misconceptions: A common error is including spaces or dashes in the card number. Remember, the card number should be a continuous string of digits. Also, some people confuse the card number with the account number listed on their bank statement; these are not the same. \n\n5. Best Practices: Always double-check your card number before submitting the form. If possible, save this information (in a secure manner) for future transactions on the same platform. This will save time and reduce the risk of mistakes in the future. \n\n6. Examples: \n   - Valid Entry: 1234567812345678\n   - Invalid Entry: 1234 5678 1234 5678 (includes spaces)\n\nAs for the relationship between your card number and CVV (Card Verification Value), these are two separate but related pieces of information used in processing card transactions. The card number identifies your account, while the CVV is a security feature designed to confirm that the person entering the information has the physical card, as it's typically located on the back of the card and not embossed.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 18.01510500907898,
+    "enhanced_context_used": true
+  }
+]

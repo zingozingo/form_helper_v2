@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "AI Form Helper",
+  "version": "1.0",
+  "description": "An AI-powered assistant for filling out forms",
+  "icons": {
+    "16": "icons/favicon-16x16.png",
+    "32": "icons/favicon-32x32.png",
+    "192": "icons/android-chrome-192x192.png",
+    "512": "icons/android-chrome-512x512.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/favicon-16x16.png",
+      "32": "icons/favicon-32x32.png",
+      "192": "icons/android-chrome-192x192.png"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["enhanced-password-field-analyzer.js", "form-context-analyzer.js", "content.js"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "panel.html"
+  }
+}

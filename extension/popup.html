@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Form Helper</title>
+  <style>
+    body {
+      width: 400px;
+      height: 500px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      background-color: #4285f4;
+      color: white;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .header h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 500;
+    }
+    
+    .status-badge {
+      font-size: 12px;
+      background-color: rgba(255, 255, 255, 0.2);
+      padding: 4px 8px;
+      border-radius: 12px;
+    }
+    
+    .content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .field-list {
+      width: 150px;
+      border-right: 1px solid #eee;
+      overflow-y: auto;
+      background-color: #f8f9fa;
+    }
+    
+    .field-list-header {
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .field-item {
+      padding: 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    
+    .field-item:hover {
+      background-color: #f0f0f0;
+    }
+    
+    .field-item.selected {
+      background-color: #e6f2ff;
+      border-left: 3px solid #4285f4;
+      font-weight: 500;
+    }
+    
+    .field-type {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+    
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+    }
+    
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+    
+    .message {
+      margin-bottom: 16px;
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .user-message {
+      background-color: #e6f2ff;
+      color: #333;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+    }
+    
+    .assistant-message {
+      background-color: #f0f0f0;
+      color: #333;
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+    
+    .action-buttons {
+      display: flex;
+      padding: 12px;
+      border-top: 1px solid #eee;
+      background-color: white;
+    }
+    
+    .action-button {
+      flex: 1;
+      padding: 10px 0;
+      background-color: #f0f0f0;
+      border: none;
+      margin: 0 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.2s;
+    }
+    
+    .action-button:hover {
+      background-color: #e0e0e0;
+    }
+    
+    .action-button.primary {
+      background-color: #4285f4;
+      color: white;
+    }
+    
+    .action-button.primary:hover {
+      background-color: #3b78e7;
+    }
+    
+    .no-forms {
+      padding: 24px;
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      padding: 24px;
+      text-align: center;
+      color: #666;
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>AI Form Helper</h2>
+    <div class="status-badge" id="status">Loading...</div>
+  </div>
+  
+  <div class="content">
+    <div class="field-list">
+      <div class="field-list-header">Form Fields</div>
+      <div id="field-list">
+        <!-- Field items will be added here -->
+      </div>
+    </div>
+    
+    <div class="chat-area">
+      <div class="messages" id="messages">
+        <div class="message assistant-message">
+          Select a form field from the list to learn more about it.
+        </div>
+      </div>
+      
+      <div class="action-buttons">
+        <button class="action-button" id="explain-button">Explain</button>
+        <button class="action-button primary" id="fill-button">Fill Field</button>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

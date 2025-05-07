@@ -1,0 +1,59 @@
+// In content.js, the issue is in the message handler for `scanForms` action
+// The original code at line 21-39:
+
+if (request.action === 'scanForms') {
+  console.log('Scanning forms for side panel');
+  const formData = scanFormsForPanel();
+  
+  if (formData.fields.length > 0) {
+    chrome.runtime.sendMessage({
+      action: 'formDetected',
+      formData: formData
+    });
+  } else {
+    chrome.runtime.sendMessage({
+      action: 'noFormsFound'
+    });
+  }
+  
+  // Always send a response for async messaging
+  sendResponse({success: true});
+  return true;
+}
+
+// Problem: The message channel is closed before the scanFormsForPanel() completes
+// The scanFormsForPanel() function has async behaviors that complete after the response is sent
+
+// Fixed version:
+if (request.action === 'scanForms') {
+  console.log('Scanning forms for side panel');
+  
+  // Run scan process asynchronously
+  setTimeout(() => {
+    try {
+      const formData = scanFormsForPanel();
+      
+      if (formData.fields.length > 0) {
+        chrome.runtime.sendMessage({
+          action: 'formDetected',
+          formData: formData
+        });
+      } else {
+        chrome.runtime.sendMessage({
+          action: 'noFormsFound'
+        });
+      }
+    } catch (error) {
+      console.error('Error scanning forms:', error);
+      // Notify of error
+      chrome.runtime.sendMessage({
+        action: 'formError',
+        error: error.message
+      });
+    }
+  }, 0);
+  
+  // Send an immediate response before the async operation completes
+  sendResponse({success: true, message: 'Form scan initiated'});
+  return true;
+}

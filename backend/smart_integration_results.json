@@ -1,0 +1,62 @@
+[
+  {
+    "test_number": 1,
+    "description": "General form purpose question",
+    "question": "What is this form for?",
+    "field_context": null,
+    "response_type": "standard",
+    "source": "hybrid_copilot",
+    "response": "This form collects the necessary information to process your request or application. The specific purpose depends on the context, but it typically helps identify you and gather the details needed for the next steps."
+  },
+  {
+    "test_number": 2,
+    "description": "Email field question",
+    "question": "Why do you need my email?",
+    "field_context": {
+      "name": "email",
+      "type": "email",
+      "label": "Email Address",
+      "required": true
+    },
+    "response_type": "standard",
+    "source": "hybrid_copilot",
+    "response": "This field is for your email address, which is used for account creation, login credentials, and communications from the service."
+  },
+  {
+    "test_number": 3,
+    "description": "Security question about password",
+    "question": "Is it secure to enter my password here?",
+    "field_context": {
+      "name": "password",
+      "type": "password",
+      "label": "Password",
+      "required": true
+    },
+    "response_type": "standard",
+    "source": "hybrid_copilot",
+    "response": "This field is for your password, which secures your account from unauthorized access."
+  },
+  {
+    "test_number": 4,
+    "description": "Question about confirm password field",
+    "question": "Why do I need to confirm my password?",
+    "field_context": {
+      "name": "confirmPassword",
+      "type": "password",
+      "label": "Confirm Password",
+      "required": true
+    },
+    "response_type": "standard",
+    "source": "hybrid_copilot",
+    "response": "This field is for your password, which secures your account from unauthorized access."
+  },
+  {
+    "test_number": 5,
+    "description": "Privacy question about form submission",
+    "question": "Is my data protected when I submit this form?",
+    "field_context": null,
+    "response_type": "enhanced",
+    "source": "api",
+    "response": "1. **Typical Purpose of Registration Forms:** Registration forms are generally used to create a user profile on a system. This could be for a website, a service, an application, etc. It allows the system to provide personalized experiences, save your progress or preferences, and sometimes enable communication with you.\n\n2. **Why the Key Information is Being Requested:** \n   - `Email`: This is typically used as your username or unique identifier. It may also be used for communication, account verification, and password recovery.\n   - `Password` and `Confirm Password`: These fields are used to secure your account. You input your password twice to ensure that there are no typographical errors.\n   - `First and Last Name`: These are usually collected for personalization purposes, like addressing you in communications.\n   - `Country`: This could be used for various purposes like setting your time zone, complying with local laws, or customizing your user experience.\n   - `Terms`: This is to ensure that you agree to the website's terms and conditions or user agreement before your profile is created.\n\n3. **What Happens with Your Information After Submission:** Once you submit the form, the system saves your details and creates a new user profile. You may receive a verification email to confirm your email address. After that, you can use your email and password to access your account. The system may use the other details to personalize your user experience.\n\n4. **Important Considerations when Completing This Type of Form:** \n   - Make sure all required fields are filled.\n   - Use a strong password for security reasons. It should be a mix of letters, numbers, and special characters.\n   - Read the terms and conditions before agreeing to them.\n\n5. **Best Practices for Accuracy and Security:** \n   - Double-check your information before submitting.\n   - Don't use the same password as other accounts to prevent security risks.\n   - Keep your password safe and don't share it with anyone.\n\n**About Your Data Protection:** The website or service should ideally employ encryption methods to protect your data, especially your password. However, the level of protection can vary with different sites. It's a good practice to check their privacy policy to understand how they handle and protect user data."
+  }
+]

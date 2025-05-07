@@ -1,0 +1,146 @@
+[
+  {
+    "test_number": 1,
+    "description": "Basic email field explanation",
+    "question": "What is this field for?",
+    "field_context": {
+      "name": "email",
+      "type": "email"
+    },
+    "form_type": null,
+    "response": "Using an invalid format, typos in domain names, using temporary emails for permanent accounts.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.0003178119659423828,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 2,
+    "description": "Basic password security question",
+    "question": "Is this secure?",
+    "field_context": {
+      "name": "password",
+      "type": "password"
+    },
+    "form_type": null,
+    "response": "Your password should never be shared and should be unique to this service.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.00010609626770019531,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 3,
+    "description": "Purpose of confirmation field",
+    "question": "Why do I need to confirm my password?",
+    "field_context": {
+      "name": "confirm_password",
+      "type": "password"
+    },
+    "form_type": "registration",
+    "response": "This field verifies that you've correctly entered your intended password by typing it a second time.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.00032782554626464844,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 4,
+    "description": "Field relationship question",
+    "question": "What's the difference between username and email?",
+    "field_context": {
+      "name": "username",
+      "type": "text"
+    },
+    "form_type": "registration",
+    "response": "Using personal information that reveals your identity, choosing common names that are already taken.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.0002589225769042969,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 5,
+    "description": "Form process question",
+    "question": "What happens if I forget my password?",
+    "field_context": null,
+    "form_type": "registration",
+    "response": "[FALLBACK: API unavailable] I can help you understand this form. Feel free to ask about specific fields or the form's purpose for more detailed information.",
+    "source": "fallback",
+    "model": "N/A",
+    "processing_time": 15.665308237075806,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 6,
+    "description": "Form security question",
+    "question": "How secure is this registration form?",
+    "field_context": null,
+    "form_type": "registration",
+    "response": "[FALLBACK: API unavailable] Organizations should protect your information according to their privacy policy. Reputable services use encryption and security measures to safeguard sensitive data.",
+    "source": "fallback",
+    "model": "N/A",
+    "processing_time": 15.995579242706299,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 7,
+    "description": "Format guidance",
+    "question": "Where do I find my CVV code?",
+    "field_context": {
+      "name": "cvv",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "Looking for a 3-digit code on the front instead of the back, confusing CVV with PIN.",
+    "source": "knowledge_base",
+    "model": "N/A",
+    "processing_time": 0.0004038810729980469,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 8,
+    "description": "Security concern",
+    "question": "Is it safe to enter my credit card here?",
+    "field_context": {
+      "name": "card_number",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "[FALLBACK: API unavailable] The card_number field is required for payment processing. This sensitive information is securely transmitted and processed according to industry standards.",
+    "source": "fallback",
+    "model": "N/A",
+    "processing_time": 16.000794887542725,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 9,
+    "description": "Purpose explanation",
+    "question": "Why do you need my billing address?",
+    "field_context": {
+      "name": "billing_address",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "1. Purpose in Payment Forms: The \"billing_address\" field in payment forms is typically used to verify the identity of the person making the payment. It provides an additional layer of security to help prevent fraudulent transactions. It's also used for sending invoices or receipts if necessary.\n\n2. Expected Format & Examples: This field usually requires you to enter a full address, including street name, city, state, and postal code. For example, \"123 Main Street, Anytown, AL, 12345\". The specific format may depend on your country's addressing system.\n\n3. Why This Information is Collected: Billing addresses are primarily collected to match the address provided with the one associated with your credit or debit card. This is part of the card issuer's verification process, ensuring that the person using the card is likely to be the legitimate cardholder. \n\n4. Privacy & Security Considerations: It's important to ensure that you're entering your billing address on a secure site (identified by an \"https\" at the start of the web address). This helps protect your personal information from being intercepted by unauthorized parties. Companies should also comply with data protection regulations to protect your information.\n\n5. Common Mistakes: A common mistake is not entering the address exactly as it appears on your card statement. For instance, if your statement says \"Street\" but you enter \"St.\", the transaction may fail the card issuer's verification process. Remember, even though this field is not required, leaving it blank could cause your transaction to be declined for security reasons.\n\nIn summary, while providing your billing address can feel like an inconvenience, it plays a crucial role in maintaining the security of your online transactions.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 15.904924869537354,
+    "enhanced_context_used": true
+  },
+  {
+    "test_number": 10,
+    "description": "Field relationship",
+    "question": "What's the relationship between my card number and CVV?",
+    "field_context": {
+      "name": "card_number",
+      "type": "text"
+    },
+    "form_type": "payment",
+    "response": "Your card number and CVV (Card Verification Value) are both important pieces of information used for verifying your identity and securing transactions when you use your credit or debit card, particularly for online or phone purchases. \n\nThe card number, also known as the primary account number, is the long series of digits on the front of your card. This number uniquely identifies your specific card and links it to your account with your bank or card issuer.\n\nThe CVV, on the other hand, is a separate 3 or 4 digit code that is not part of your card number. It's often found on the back (Visa, MasterCard) or front (American Express) of your card. This code provides an extra layer of security, as it's not typically included in your card's magnetic strip or chip data, and it's not printed on your receipts. This means that someone who has your card number but not your CVV would have a harder time making fraudulent charges.\n\nWhen filling out forms that require your card information, you'll often need to provide both your card number and CVV. The purpose of this is to verify that you are indeed the authorized cardholder and have physical possession of the card. \n\nRemember, for security reasons, it's crucial to only enter this information on trusted, secure websites (look for \"https://\" in the web address), and never share these details over email or text message.",
+    "source": "api",
+    "model": "gpt-4",
+    "processing_time": 14.205087900161743,
+    "enhanced_context_used": true
+  }
+]

@@ -1,0 +1,311 @@
+{
+  "fields": {
+    "email": {
+      "purpose": "This field is for your email address, which is used for account creation, login credentials, and communications from the service.",
+      "format": "Enter a valid email in the format username@domain.com",
+      "examples": "john.doe@example.com, jane_smith123@company.co.uk",
+      "importance": "Essential for digital communication and account recovery. Your email often serves as your primary identifier and will be used for important notifications.",
+      "privacy_implications": "Your email may be used for communication but should not be shared with third parties without consent.",
+      "common_mistakes": "Using an invalid format, typos in domain names, using temporary emails for permanent accounts."
+    },
+    "password": {
+      "purpose": "This field is for your password, which secures your account from unauthorized access.",
+      "format": "Create a strong password with at least 8 characters, including uppercase and lowercase letters, numbers, and special characters.",
+      "examples": "(Examples aren't shown for security reasons)",
+      "importance": "Critical for security. A strong password is your first defense against unauthorized account access.",
+      "privacy_implications": "Your password should never be shared and should be unique to this service.",
+      "common_mistakes": "Using common words, reusing passwords across sites, using personal information that's easy to guess."
+    },
+    "name": {
+      "purpose": "This field is for your full name, which identifies you in the system and on documents.",
+      "format": "Enter your name as it appears on official documents.",
+      "examples": "John Smith, María García López",
+      "importance": "Used for personalization and identification throughout the service.",
+      "privacy_implications": "Your name may appear in various contexts within the service.",
+      "common_mistakes": "Using nicknames when legal names are required, inconsistent capitalization or formatting."
+    },
+    "first_name": {
+      "purpose": "This field is for your first/given name only.",
+      "format": "Enter just your first name, without your last/family name.",
+      "examples": "John, María, Li",
+      "importance": "Used for personalized communication and identification.",
+      "privacy_implications": "Your first name will likely be visible in user interfaces.",
+      "common_mistakes": "Including middle names or titles, using nicknames when formal names are required."
+    },
+    "last_name": {
+      "purpose": "This field is for your last/family name only.",
+      "format": "Enter just your last name, without your first/given name.",
+      "examples": "Smith, García, Zhang",
+      "importance": "Important for formal identification and alphabetical sorting.",
+      "privacy_implications": "Your last name will be used in official communications and documents.",
+      "common_mistakes": "Including first names, hyphenating incorrectly, inconsistent capitalization."
+    },
+    "phone": {
+      "purpose": "This field is for your phone number, which may be used for account verification, two-factor authentication, or contact purposes.",
+      "format": "Enter your phone number including country code if required.",
+      "examples": "+1 555-123-4567, (555) 123-4567",
+      "importance": "Often used for security verification and urgent communications.",
+      "privacy_implications": "Your phone number is personal information that could be used for SMS marketing if you consent.",
+      "common_mistakes": "Omitting country code for international forms, including spaces or special characters when not allowed."
+    },
+    "tel": {
+      "purpose": "This field is for your telephone number, which may be used for account verification, two-factor authentication, or contact purposes.",
+      "format": "Enter your phone number including country code if required.",
+      "examples": "+1 555-123-4567, (555) 123-4567",
+      "importance": "Often used for security verification and urgent communications.",
+      "privacy_implications": "Your phone number is personal information that could be used for SMS marketing if you consent.",
+      "common_mistakes": "Omitting country code for international forms, including spaces or special characters when not allowed."
+    },
+    "address": {
+      "purpose": "This field is for your street address, which is needed for shipping, billing, or identification purposes.",
+      "format": "Enter your complete street address including house/apartment number and street name.",
+      "examples": "123 Main Street Apt 4B, 1600 Pennsylvania Avenue NW",
+      "importance": "Essential for delivery of physical items or services tied to your location.",
+      "privacy_implications": "Your address is sensitive personal information that should be protected.",
+      "common_mistakes": "Abbreviating street types inconsistently, omitting apartment/unit numbers, typos in street names."
+    },
+    "city": {
+      "purpose": "This field is for your city or town name, which helps complete your address information.",
+      "format": "Enter the name of your city or town.",
+      "examples": "New York, London, Tokyo",
+      "importance": "Required for accurate mail delivery and location-based services.",
+      "privacy_implications": "Your city is part of your address and helps identify your general location.",
+      "common_mistakes": "Misspelling city names, using neighborhood names instead of official city names."
+    },
+    "state": {
+      "purpose": "This field is for your state, province, or region, which helps complete your address information.",
+      "format": "Enter the full name or standard abbreviation of your state/province.",
+      "examples": "California, CA, Ontario, ON",
+      "importance": "Required for mail routing and may affect tax calculations.",
+      "privacy_implications": "Your state/province narrows down your geographic location.",
+      "common_mistakes": "Using non-standard abbreviations, confusing state/province with country or city."
+    },
+    "zip": {
+      "purpose": "This field is for your postal code or ZIP code, which is required for mail delivery and location verification.",
+      "format": "Enter your postal code in the format used by your country.",
+      "examples": "90210, SW1A 1AA",
+      "importance": "Critical for mail delivery and sometimes used to auto-fill city and state information.",
+      "privacy_implications": "Your postal code can identify your neighborhood or small geographic area.",
+      "common_mistakes": "Transposing digits, forgetting hyphens in extended ZIP codes, using outdated postal codes."
+    },
+    "country": {
+      "purpose": "This field is for your country, which completes your address and may determine available options or pricing.",
+      "format": "Select your country from the dropdown or enter its name.",
+      "examples": "United States, Canada, Germany",
+      "importance": "Affects shipping options, currency, tax calculations, and available services.",
+      "privacy_implications": "Your country is basic location information with minimal privacy concerns.",
+      "common_mistakes": "Confusing country with nationality, using obsolete country names."
+    },
+    "date": {
+      "purpose": "This field is for entering a specific date.",
+      "format": "Enter the date in the required format (often MM/DD/YYYY in the US or DD/MM/YYYY elsewhere).",
+      "examples": "05/15/2023, 15/05/2023",
+      "importance": "Dates are used for scheduling, record-keeping, and time-sensitive information.",
+      "privacy_implications": "Dates alone usually have minimal privacy implications.",
+      "common_mistakes": "Mixing up MM/DD and DD/MM formats, using two-digit years, incorrect separators."
+    },
+    "dob": {
+      "purpose": "This field is for your date of birth, which helps verify your identity and age eligibility.",
+      "format": "Enter your birth date in the required format, typically MM/DD/YYYY in the US.",
+      "examples": "01/15/1985, 15/01/1985",
+      "importance": "Used to verify age for restricted services and as an identity verification point.",
+      "privacy_implications": "Your birth date is personally identifiable information that should be protected.",
+      "common_mistakes": "Mixing up month and day positions, entering the current year instead of birth year."
+    },
+    "ssn": {
+      "purpose": "This field is for your Social Security Number (SSN), which is used for tax reporting and identity verification in the United States.",
+      "format": "Enter your 9-digit SSN, with or without hyphens depending on the form requirements.",
+      "examples": "123-45-6789, 123456789",
+      "importance": "Critical for tax purposes and legal identification in the US.",
+      "privacy_implications": "Your SSN is highly sensitive information that should be carefully protected.",
+      "common_mistakes": "Transposing digits, sharing SSN unnecessarily, entering a Tax ID in place of SSN."
+    },
+    "credit_card": {
+      "purpose": "This field is for your credit card number, which is required to process payments.",
+      "format": "Enter the 16-digit number from your credit card without spaces or hyphens, unless otherwise specified.",
+      "examples": "4111111111111111, 4111-1111-1111-1111",
+      "importance": "Required to complete financial transactions and set up recurring payments.",
+      "privacy_implications": "Your credit card information is highly sensitive and should only be entered on secure websites.",
+      "common_mistakes": "Entering debit card numbers when credit is required, typos in the long number sequence."
+    },
+    "cvv": {
+      "purpose": "This field is for your card verification value (CVV), a security code that helps verify you have physical possession of the card.",
+      "format": "Enter the 3 or 4 digit security code found on the back (or front for American Express) of your card.",
+      "examples": "123, 4567",
+      "importance": "A security measure to prevent fraud in card-not-present transactions.",
+      "privacy_implications": "Your CVV should never be stored by merchants and should only be shared on secure payment pages.",
+      "common_mistakes": "Looking for a 3-digit code on the front instead of the back, confusing CVV with PIN."
+    },
+    "gender": {
+      "purpose": "This field is for your gender, which may be collected for demographic purposes or to personalize services.",
+      "format": "Select or enter your gender according to the options provided.",
+      "examples": "Male, Female, Non-binary, Prefer not to say",
+      "importance": "May be used for personalization, demographic analysis, or required reporting.",
+      "privacy_implications": "Gender information is personal and may be sensitive for some individuals.",
+      "common_mistakes": "Assuming only binary options, confusing gender with sex assigned at birth."
+    },
+    "checkbox": {
+      "purpose": "Checkboxes allow you to select multiple options or indicate agreement to terms and conditions.",
+      "format": "Click the box to select it, click again to deselect.",
+      "examples": "☑ I agree to the Terms of Service, ☑ Send me promotional emails",
+      "importance": "Often used for consent, preferences, and multi-select options.",
+      "privacy_implications": "Checkboxes for marketing consent directly affect how your data may be used.",
+      "common_mistakes": "Missing required checkboxes, not reading terms before agreeing, confusing opt-in vs. opt-out options."
+    },
+    "radio": {
+      "purpose": "Radio buttons allow you to select exactly one option from a group of choices.",
+      "format": "Click on the option you want to select. Only one can be selected at a time.",
+      "examples": "○ Yes ● No, ○ Small ● Medium ○ Large",
+      "importance": "Used when a single selection must be made from multiple options.",
+      "privacy_implications": "Your selections may be used to personalize content or services.",
+      "common_mistakes": "Trying to deselect all options (one must always be selected), overlooking default selections."
+    },
+    "file": {
+      "purpose": "This field allows you to upload documents or images required for your application or account.",
+      "format": "Click to browse your files or drag and drop the file into the designated area.",
+      "examples": "Upload your ID, Upload a profile picture",
+      "importance": "Allows you to provide digital copies of documents for verification or processing.",
+      "privacy_implications": "Uploaded files may contain sensitive metadata or personal information.",
+      "common_mistakes": "Exceeding file size limits, using incorrect file formats, uploading low-quality scans."
+    },
+    "select": {
+      "purpose": "This dropdown field allows you to choose one option from a predefined list.",
+      "format": "Click on the dropdown and select the appropriate option from the list.",
+      "examples": "Choose your country, Select your preferred language",
+      "importance": "Ensures standardized responses for categorical information.",
+      "privacy_implications": "Your selections may affect available services or how information is processed.",
+      "common_mistakes": "Missing default selections, scrolling past the desired option, selecting similar but incorrect options."
+    },
+    "username": {
+      "purpose": "This field is for your chosen username, which identifies you in the system and may be visible to other users.",
+      "format": "Create a unique username following the specified rules (letters, numbers, and sometimes special characters).",
+      "examples": "john_doe, techguru123",
+      "importance": "Your primary identifier for logging in and may be visible in public areas of the service.",
+      "privacy_implications": "Usernames are often publicly visible, so consider privacy when choosing one.",
+      "common_mistakes": "Using personal information that reveals your identity, choosing common names that are already taken."
+    },
+    "confirm_password": {
+      "purpose": "This field verifies that you've correctly entered your intended password by typing it a second time.",
+      "format": "Re-enter the exact same password you typed in the password field.",
+      "examples": "(Examples aren't shown for security reasons)",
+      "importance": "Helps prevent account access issues due to password typos during registration.",
+      "privacy_implications": "Same as the password field - should be kept private and secure.",
+      "common_mistakes": "Typing a different password, forgetting capital letters or special characters from the original password."
+    },
+    "occupation": {
+      "purpose": "This field collects information about your job or professional role.",
+      "format": "Enter your job title or select from available options.",
+      "examples": "Software Developer, Teacher, Marketing Manager",
+      "importance": "May be used for demographic purposes or to tailor services to professional needs.",
+      "privacy_implications": "Reveals information about your professional life that may be used for targeted marketing.",
+      "common_mistakes": "Being too specific or too vague, using informal titles instead of standardized job titles."
+    },
+    "income": {
+      "purpose": "This field collects information about your income level, usually for financial services or demographic purposes.",
+      "format": "Select an income range or enter a specific amount as requested.",
+      "examples": "$50,000-$75,000, $100,000+",
+      "importance": "May affect eligibility for financial products or services.",
+      "privacy_implications": "Highly personal financial information that should be protected.",
+      "common_mistakes": "Reporting net instead of gross income, including or excluding bonuses inconsistently."
+    },
+    "company": {
+      "purpose": "This field collects information about your employer or business.",
+      "format": "Enter the official name of your company or organization.",
+      "examples": "Acme Corporation, Self-employed",
+      "importance": "Used for professional context and may affect business-related services.",
+      "privacy_implications": "Reveals your professional affiliation which may be visible in profiles.",
+      "common_mistakes": "Using abbreviations that aren't widely recognized, inconsistent capitalization, spelling errors."
+    }
+  },
+  "form_types": {
+    "registration": {
+      "purpose": "Account registration forms allow you to create a new account or profile on a website or service.",
+      "common_fields": ["username", "email", "password", "confirm_password", "name"],
+      "importance": "The gateway to accessing a service's features, often storing your preferences and history.",
+      "privacy_considerations": "Consider which personal details are necessary and which optional fields you wish to complete."
+    },
+    "login": {
+      "purpose": "Login forms allow you to access your existing account on a website or service.",
+      "common_fields": ["email/username", "password"],
+      "importance": "Secures your personal account and data from unauthorized access.",
+      "privacy_considerations": "Always ensure you're on the legitimate website before entering credentials."
+    },
+    "payment": {
+      "purpose": "Payment forms collect financial information to process transactions.",
+      "common_fields": ["credit_card", "cvv", "expiration_date", "billing_address"],
+      "importance": "Securely processes financial transactions for purchases or subscriptions.",
+      "privacy_considerations": "Only enter payment details on secure (https) pages with recognized payment processors."
+    },
+    "contact": {
+      "purpose": "Contact forms allow you to send messages or inquiries to a website owner or organization.",
+      "common_fields": ["name", "email", "subject", "message"],
+      "importance": "Facilitates communication without revealing your full contact details.",
+      "privacy_considerations": "Information provided may be used for marketing purposes if you don't opt out."
+    },
+    "shipping": {
+      "purpose": "Shipping forms collect delivery information for physical products.",
+      "common_fields": ["name", "address", "city", "state", "zip", "country", "phone"],
+      "importance": "Ensures physical goods are delivered to the correct location.",
+      "privacy_considerations": "Your address is personal information that will be shared with shipping carriers."
+    },
+    "survey": {
+      "purpose": "Survey forms collect opinions, feedback, or demographic information.",
+      "common_fields": ["rating_scales", "multiple_choice", "text_responses"],
+      "importance": "Provides feedback that can improve products and services.",
+      "privacy_considerations": "Consider whether responses are anonymous or can be linked to your identity."
+    },
+    "job_application": {
+      "purpose": "Job application forms collect professional information for employment consideration.",
+      "common_fields": ["name", "email", "phone", "resume", "cover_letter", "work_experience", "education"],
+      "importance": "The first step in the hiring process, showcasing your qualifications.",
+      "privacy_considerations": "Your professional information will be reviewed by hiring personnel and may be retained."
+    },
+    "subscription": {
+      "purpose": "Subscription forms allow you to sign up for regular content, services, or products.",
+      "common_fields": ["email", "name", "preferences"],
+      "importance": "Provides regular updates or delivery of content or products you're interested in.",
+      "privacy_considerations": "Your email will be used for regular communications; check frequency and unsubscribe options."
+    }
+  },
+  "common_questions": {
+    "what is this form for": "This form collects the necessary information to process your request or application. The specific purpose depends on the context, but it typically helps identify you and gather the details needed for the next steps.",
+    
+    "how long will this take": "Most forms take between 5-15 minutes to complete, depending on how familiar you are with the requested information. Having your personal documents ready can make the process faster.",
+    
+    "is this information secure": "This information should be transmitted securely. Look for https in the URL and a padlock icon in your browser to confirm. The organization's privacy policy should explain how your data will be used and protected.",
+    
+    "can i save and continue later": "Many forms allow you to save your progress and continue later, but this depends on the specific website. Look for a 'Save' button or similar option. If you don't see one, you may need to complete the form in one session.",
+    
+    "why do they need": "The information requested is typically necessary to process your application, verify your identity, or provide the service you're requesting. If you're concerned about a specific field, check the form's instructions or the organization's privacy policy.",
+    
+    "what if i make a mistake": "Most forms allow you to review your information before final submission. After submitting, you may need to contact the organization directly to correct any errors.",
+    
+    "required fields": "Fields marked with an asterisk (*) or labeled as 'required' must be completed to submit the form. You cannot proceed without filling these in.",
+    
+    "what happens after i submit": "After submission, your information will be processed according to the organization's procedures. You may receive a confirmation email or message, and further instructions on next steps if applicable.",
+    
+    "why isn't the form submitting": "If you can't submit the form, check for error messages highlighting missing or incorrectly formatted information. Ensure all required fields are completed and that you have a stable internet connection.",
+    
+    "do i need to fill out everything": "You only need to complete fields marked as required (often indicated with an asterisk *). Optional fields can be left blank, though providing more information may help process your request more efficiently.",
+    
+    "is my information private": "Organizations should have a privacy policy explaining how your information will be used and protected. Look for links to 'Privacy Policy' or 'Terms of Service' near the form. Legitimate organizations will not share your information without consent, except as required by law.",
+    
+    "will i receive spam": "Reputable organizations should only send you emails you've explicitly agreed to receive. Look for checkboxes about marketing communications - you can often opt out. They should also provide unsubscribe options in any future emails.",
+    
+    "how do i know this form is legitimate": "Verify the website's legitimacy by checking the URL (it should match the official organization), looking for https security, and researching the organization if you're unsure. Be cautious if you arrived via email - consider navigating to the site directly instead of clicking links.",
+    
+    "what information do i need to have ready": "Commonly needed information includes personal details (name, address, contact info), account information (for existing accounts), and sometimes identification documents. For financial forms, you may need payment information and possibly social security/tax numbers.",
+    
+    "can i use autofill": "Most modern browsers support autofill for common form fields. To use it, your browser needs to have saved this information previously. Look for prompts to save information when you first fill out forms, or check your browser's autofill settings.",
+    
+    "what if i don't have all the information": "For required fields, you'll need the information to proceed. If it's an optional field, you can usually leave it blank. If you're missing critical information, look for 'Save for later' options or contact the organization's support for guidance.",
+    
+    "how do i know if my submission was successful": "Most forms will show a confirmation page or message after successful submission. You may also receive a confirmation email. If you're uncertain, check your email or contact the organization to confirm.",
+    
+    "can i edit my information later": "This varies by organization. Many accounts allow you to update your profile or information later through account settings. For one-time submissions, you may need to contact customer service to make changes after submission.",
+    
+    "how accurate does the information need to be": "Information should be as accurate as possible, especially for legal, financial, or identity-related fields. Providing inaccurate information could delay processing, result in service issues, or potentially violate terms of service.",
+    
+    "what devices can i use to fill this form": "Most online forms work on any device with a web browser, including computers, tablets, and smartphones. However, complex forms may be easier to complete on devices with larger screens and keyboards."
+  }
+}
