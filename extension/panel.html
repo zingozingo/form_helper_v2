@@ -4,392 +4,549 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Form Helper</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
-    <!-- Fix: Marked should be loaded as a script, not stylesheet -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="lib/material-icons.css">
+    <script src="lib/marked.min.js"></script>
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Critical CSS Overrides for Button Visibility -->
+    <!-- Original Sidebar Panel UI Styling -->
     <style>
-        /* Force critical buttons to always be visible */
-        #autofill-button, 
-        #send-button, 
-        #upload-pdf-button, 
-        #emergency-button,
-        .panel-actions, 
-        .chat-input button {
-            display: flex !important;
-            visibility: visible !important;
+        :root {
+            --primary-color: #4285F4;
+            --primary-dark: #3367D6;
+            --secondary-color: #34A853;
+            --error-color: #EA4335;
+            --warning-color: #FBBC05;
+            --neutral-50: #F8F9FA;
+            --neutral-100: #F1F3F4;
+            --neutral-200: #E8EAED;
+            --neutral-300: #DADCE0;
+            --neutral-700: #5F6368;
+            --neutral-900: #202124;
+            --border-radius: 4px;
+            --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            --transition-speed: 0.2s;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--neutral-900);
+            background: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        .sidebar-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+            background: white;
+            border-left: 1px solid var(--neutral-200);
+        }
+        
+        .sidebar-header {
+            padding: 12px 16px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .sidebar-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+        
+        .field-count {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            margin-left: 6px;
+        }
+        
+        .sidebar-search {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--neutral-200);
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+        }
+        
+        .fields-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+        
+        .field-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            margin-bottom: 6px;
+            border: 1px solid transparent;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .field-item:hover {
+            background-color: var(--neutral-50);
+            border-color: var(--neutral-200);
+        }
+        
+        .field-item.selected {
+            background-color: rgba(66, 133, 244, 0.08);
+            border-color: var(--primary-color);
+        }
+        
+        .field-icon-container {
+            position: relative;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+        
+        .field-icon {
+            color: var(--primary-color);
+            font-size: 20px;
+        }
+        
+        .confidence-indicator {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .confidence-high {
+            background-color: var(--secondary-color);
+        }
+        
+        .confidence-medium {
+            background-color: var(--warning-color);
+        }
+        
+        .confidence-low {
+            background-color: var(--error-color);
+        }
+        
+        .field-details {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .field-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .field-type {
+            color: var(--neutral-700);
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .field-type i {
+            font-size: 14px;
+            margin-right: 4px;
+        }
+        
+        .required-badge {
+            background-color: rgba(234, 67, 53, 0.1);
+            color: var(--error-color);
+            padding: 1px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-left: 6px;
+        }
+        
+        .confidence-text {
+            font-size: 10px;
+            margin-left: 6px;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        
+        .confidence-text.confidence-high {
+            background-color: rgba(52, 168, 83, 0.1);
+            color: var(--secondary-color);
+        }
+        
+        .confidence-text.confidence-medium {
+            background-color: rgba(251, 188, 5, 0.1);
+            color: #996c05;
+        }
+        
+        .confidence-text.confidence-low {
+            background-color: rgba(234, 67, 53, 0.1);
+            color: var(--error-color);
+        }
+        
+        .conversation-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            border-top: 1px solid var(--neutral-200);
+        }
+        
+        .conversation-header {
+            padding: 12px 16px;
+            background-color: var(--neutral-50);
+            border-bottom: 1px solid var(--neutral-200);
+            font-weight: 500;
+        }
+        
+        .active-field-name {
+            color: var(--primary-color);
+        }
+        
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            background-color: white;
+        }
+        
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .user-message {
+            justify-content: flex-end;
+        }
+        
+        .ai-message {
+            justify-content: flex-start;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 16px;
+            background-color: var(--neutral-200);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        
+        .user-message .message-avatar {
+            order: 2;
+            margin-right: 0;
+            margin-left: 12px;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .message-content {
+            max-width: 85%;
+            padding: 12px;
+            border-radius: 12px;
+            background-color: var(--neutral-100);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-message .message-content {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .system-message {
+            text-align: center;
+            margin: 16px 0;
+            color: var(--neutral-700);
+            font-style: italic;
+            font-size: 12px;
+        }
+        
+        .message-timestamp {
+            font-size: 10px;
+            color: var(--neutral-700);
+            margin-top: 4px;
+            text-align: right;
+        }
+        
+        .user-message .message-timestamp {
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .input-container {
+            padding: 12px 16px;
+            border-top: 1px solid var(--neutral-200);
+            display: flex;
+            background-color: white;
+        }
+        
+        .message-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid var(--neutral-300);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            resize: none;
+            max-height: 120px;
+            min-height: 40px;
+        }
+        
+        .send-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 8px;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .footer {
+            padding: 16px;
+            border-top: 1px solid var(--neutral-200);
+            display: flex;
+            justify-content: space-between;
+            background-color: white;
+        }
+        
+        .autofill-button {
+            flex: 1;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color var(--transition-speed) ease;
+        }
+        
+        .autofill-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .typing-indicator {
+            display: none;
+            padding: 12px;
+            margin: 0 0 16px 44px;
+        }
+        
+        .typing-indicator.visible {
+            display: flex;
+        }
+        
+        .typing-dot {
+            background-color: var(--neutral-300);
+            width: 8px;
+            height: 8px;
+            border-radius: 4px;
+            margin: 0 3px;
+            animation: typing-animation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing-animation {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .panel-appeared .fields-container {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        /* Icon button hover effects */
+        #help-button:hover, #close-panel:hover {
             opacity: 1 !important;
-            z-index: 10000 !important;
-            position: relative !important;
-            pointer-events: auto !important;
+            background: rgba(255,255,255,0.3) !important;
+            transform: scale(1.1);
+            transition: all 0.2s ease;
         }
         
-        /* Enhanced button styling */
-        .primary-button, .secondary-button {
-            min-height: 44px !important;
-            min-width: 100px !important;
-            border: 2px solid #000 !important;
-            margin: 5px !important;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
-        }
-        
-        /* Enhanced container styling */
-        .panel-actions {
-            background-color: white !important;
-            border-top: 2px solid #ddd !important;
-            padding: 10px !important;
-            min-height: 60px !important;
-        }
-        
-        /* Fix stacking context issues */
-        .container {
-            z-index: 1 !important;
-        }
-        
-        .fields-panel, .chat-panel {
-            z-index: 5 !important;
-        }
-        
-        /* Force emergency button on top */
-        #emergency-button {
-            z-index: 2147483647 !important; /* Maximum z-index */
-        }
-        
-        /* Ensure proper display for debugging */
+        /* Debug message (hidden by default) */
         .debug-message {
-            display: block !important;
+            display: none !important;
+        }
+        
+        /* Emergency button styling */
+        .emergency-button {
+            position: fixed !important;
+            bottom: 20px !important;
+            right: 20px !important;
+            z-index: 2147483647 !important;
+            width: 60px !important;
+            height: 60px !important;
+            background-color: #EA4335 !important;
+            color: white !important;
+            border-radius: 50% !important;
+            display: none !important; /* Hidden by default */
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+            font-size: 20px !important;
+            border: 3px solid white !important;
         }
     </style>
 </head>
 <body>
-    <!-- Debug message to help with button issues - ALWAYS VISIBLE NOW -->
-    <div class="debug-message" style="background-color:#FFFACD; padding:8px; border:1px solid #FFDC00; margin-bottom:10px; font-size:12px;">
-        <p><strong>BUTTON DEBUG INFO:</strong> If buttons aren't visible, try any of these options:</p>
-        <ol style="margin-left:20px; margin-top:5px;">
+    <!-- Debug message - hidden by default -->
+    <div class="debug-message" style="display:none">
+        <p><strong>Keyboard shortcuts:</strong></p>
+        <ol>
             <p>1. Press Alt+A to autofill the form via keyboard shortcut</p>
-            <p>2. Type 'autofill' in the chat and press Enter</p>
+            <p>2. Press Alt+F to focus on fields panel</p>
         </ol>
     </div>
     
-    <div class="container" id="main-container">
-        <!-- Fields Panel -->
-        <div id="fields-panel" class="fields-panel" aria-label="Form fields panel">
-            <div class="panel-header">
-                <h2>Form Fields</h2>
-                <div class="header-actions">
-                    <span id="fields-count" class="badge" aria-label="Field count">0</span>
-                    <button id="help-button" class="icon-button" aria-label="Help" title="View help">
-                        <i class="material-icons">help_outline</i>
-                    </button>
-                    <button id="high-contrast-toggle" class="icon-button" aria-label="Toggle high contrast mode" title="Toggle high contrast">
-                        <i class="material-icons">contrast</i>
-                    </button>
-                </div>
+    <div class="sidebar-panel" id="sidebar-panel">
+        <div class="sidebar-header">
+            <div class="sidebar-title">
+                <i class="material-icons">article</i>
+                <span>FORM FIELDS</span>
+                <span class="field-count" id="field-count">0</span>
             </div>
-            
-            <div id="fields-list" class="fields-list" aria-label="List of form fields">
-                <!-- Fields will be populated here -->
-            </div>
-            
-            <div class="profile-section">
-                <div class="profile-header">
-                    <h3>Saved Profiles</h3>
-                    <button id="profile-add" class="icon-button" aria-label="Add profile" title="Add new profile">
-                        <i class="material-icons">person_add</i>
-                    </button>
-                </div>
-                <select id="profile-selector" aria-label="Select profile">
-                    <option value="">Select a profile</option>
-                    <option value="default">Default Profile</option>
-                </select>
-                <button id="autofill-profile" class="secondary-button">
-                    <i class="material-icons">auto_fix_high</i>
-                    <span>Auto-fill With Profile</span>
-                </button>
-            </div>
-            
-            <div class="helper-text">
-                <p>Click on any field to learn more or get help filling it out (Alt+F)</p>
-                <p>Press '?' for keyboard shortcuts</p>
-            </div>
-            
-            <div class="panel-actions">
-                <!-- Enhanced visibility buttons with !important flags -->
-                <button id="autofill-button" class="primary-button" aria-label="Auto-fill form" style="min-height:44px !important; border:2px solid black !important; background-color:#4285F4 !important; color:white !important; font-weight:bold !important; padding:10px !important; display:flex !important; align-items:center !important; justify-content:center !important;">
-                    <i class="material-icons">auto_fix_high</i>
-                    <span>Auto-fill Form</span>
-                </button>
-                <button id="upload-pdf-button" class="secondary-button" aria-label="Upload PDF" style="min-height:44px !important; border:2px solid #4285F4 !important; background-color:white !important; color:#4285F4 !important; font-weight:bold !important; padding:10px !important; display:flex !important; align-items:center !important; justify-content:center !important;">
-                    <i class="material-icons">upload_file</i>
-                    <span>Upload PDF</span>
-                </button>
-                
-                <!-- Fallback text-based command input in case buttons are not visible - hidden -->
-                <div id="fallback-commands" style="display:none !important;">
-                    <p style="font-size:12px; color:#666; margin-bottom:5px;"><strong>If buttons are not visible:</strong> Type command below</p>
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="command-input" placeholder="Type 'autofill' or 'upload'" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
-                        <button id="command-button" style="background:#4285F4; color:white; border:none; border-radius:4px; padding:0 15px; font-weight:bold;">Go</button>
-                    </div>
-                </div>
+            <div style="display:flex; gap:8px;">
+                <i class="material-icons" id="help-button" style="cursor:pointer; opacity:0.8; font-size:20px; background:rgba(255,255,255,0.2); border-radius:50%; padding:4px;">help_outline</i>
+                <i class="material-icons" id="close-panel" style="cursor:pointer; opacity:0.8; font-size:20px; background:rgba(255,255,255,0.2); border-radius:50%; padding:4px;">close</i>
             </div>
         </div>
         
-        <!-- Toggle button -->
-        <div class="panel-toggle" id="panel-toggle" title="Toggle fields panel" aria-label="Toggle fields panel" tabindex="0" role="button" style="z-index:1000 !important; display:flex !important; visibility:visible !important;">
-            <i class="material-icons toggle-icon">chevron_left</i>
+        <div class="sidebar-search">
+            <input type="text" class="search-input" id="search-input" placeholder="Type your search here...">
         </div>
         
-        <!-- Chat Panel -->
-        <div id="chat-panel" class="chat-panel" aria-label="Chat panel">
-            <div class="chat-header">
-                <div class="active-field-indicator" id="active-field-indicator">
-                    <i class="material-icons">arrow_right</i>
-                    <span id="active-field-name">No field selected</span>
-                </div>
-                <div class="suggestion-chips" id="suggestion-chips">
-                    <button class="chip" data-value="What is this form for?">What is this form for?</button>
-                    <button class="chip" data-value="How do I fill this out?">How do I fill this out?</button>
-                    <button class="chip" data-value="Is this form secure?">Is this form secure?</button>
-                </div>
+        <div class="fields-container" id="fields-container">
+            <!-- Fields will be populated here -->
+        </div>
+        
+        <div class="conversation-container" id="conversation-container">
+            <div class="conversation-header">
+                <span>Field: <span class="active-field-name" id="active-field-name">None selected</span></span>
             </div>
             
-            <div id="chat-messages" class="chat-messages" aria-live="polite">
+            <div class="messages-container" id="messages-container">
                 <!-- Welcome message -->
                 <div class="message ai-message">
                     <div class="message-avatar">
-                        <i class="material-icons ai-icon">smart_toy</i>
+                        <i class="material-icons">smart_toy</i>
                     </div>
-                    <div class="message-container">
-                        <div class="message-content">
-                            Hello! I'm your form assistant. I can help you fill out forms and answer questions about form fields. If you have a PDF form, you can also upload it for analysis.
-                        </div>
-                        <div class="message-timestamp">Now</div>
+                    <div class="message-content">
+                        Hello! I'm your form assistant. Select a field to learn more, or ask me a question about this form.
                     </div>
+                </div>
+                
+                <div class="typing-indicator" id="typing-indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
                 </div>
             </div>
             
-            <div id="typing-indicator" class="typing-indicator" aria-live="polite">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
+            <div class="input-container">
+                <textarea class="message-input" id="message-input" placeholder="Ask about this form..."></textarea>
+                <button class="send-button" id="send-button">
+                    <i class="material-icons">send</i>
+                </button>
             </div>
-            
-            <div class="chat-input" style="display:flex !important; visibility:visible !important; z-index:9000 !important;">
-                <form id="chat-form" style="display:flex !important; width:100% !important;">
-                    <input type="text" id="chat-input-field" placeholder="Ask about this form..." aria-label="Type your message">
-                    <button type="submit" id="send-button" aria-label="Send message" style="display:flex !important; visibility:visible !important; min-width:40px !important; min-height:40px !important; z-index:9500 !important;">
-                        <i class="material-icons">send</i>
-                    </button>
-                </form>
-            </div>
+        </div>
+        
+        <div class="footer">
+            <button class="autofill-button" id="autofill-button">
+                <i class="material-icons">auto_fix_high</i>
+                <span>Auto-fill Form</span>
+            </button>
         </div>
     </div>
     
     <!-- Shortcuts Help Modal -->
-    <div id="shortcuts-modal" class="modal" aria-hidden="true">
-        <div class="modal-content" role="dialog" aria-labelledby="shortcuts-title">
-            <div class="modal-header">
-                <h3 id="shortcuts-title">Keyboard Shortcuts</h3>
-                <button class="close-button" aria-label="Close shortcuts dialog">
+    <div id="shortcuts-modal" class="modal" aria-hidden="true" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+        <div class="modal-content" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:400px; background:white; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+            <div class="modal-header" style="padding:16px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <h3 id="shortcuts-title" style="margin:0; font-weight:500;">Keyboard Shortcuts</h3>
+                <button class="close-button" aria-label="Close shortcuts dialog" style="background:none; border:none; cursor:pointer;">
                     <i class="material-icons">close</i>
                 </button>
             </div>
-            <div class="modal-body">
-                <div class="shortcut-row">
-                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>F</kbd></div>
-                    <div class="shortcut-description">Focus on fields panel</div>
-                </div>
-                <div class="shortcut-row">
-                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>C</kbd></div>
-                    <div class="shortcut-description">Focus on chat input</div>
-                </div>
-                <div class="shortcut-row">
-                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>A</kbd></div>
-                    <div class="shortcut-description">Auto-fill form</div>
-                </div>
-                <div class="shortcut-row">
-                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>P</kbd></div>
-                    <div class="shortcut-description">Toggle fields panel</div>
-                </div>
-                <div class="shortcut-row">
-                    <div class="shortcut-key"><kbd>?</kbd></div>
-                    <div class="shortcut-description">Show this help dialog</div>
-                </div>
-                <div class="shortcut-row">
-                    <div class="shortcut-key"><kbd>Esc</kbd></div>
-                    <div class="shortcut-description">Close dialogs</div>
+            <div class="modal-body" style="padding:16px;">
+                <div style="display:grid; grid-template-columns:auto 1fr; gap:12px; row-gap:16px;">
+                    <div><kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">Alt</kbd> + <kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">F</kbd></div>
+                    <div>Focus on fields list</div>
+                    
+                    <div><kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">Alt</kbd> + <kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">C</kbd></div>
+                    <div>Focus on chat input</div>
+                    
+                    <div><kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">Alt</kbd> + <kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">A</kbd></div>
+                    <div>Auto-fill form</div>
+                    
+                    <div><kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">?</kbd></div>
+                    <div>Show this help dialog</div>
+                    
+                    <div><kbd style="background:#eee; border:1px solid #ccc; border-radius:3px; padding:2px 6px;">Esc</kbd></div>
+                    <div>Close dialogs</div>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <!-- Floating emergency fallback button - HIDDEN -->
-    <div id="emergency-button" style="
-        position: fixed !important;
-        bottom: 20px !important;
-        right: 20px !important;
-        z-index: 2147483647 !important;
-        width: 60px !important;
-        height: 60px !important;
-        background-color: #EA4335 !important;
-        color: white !important;
-        border-radius: 50% !important;
-        display: none !important; /* Hidden - no longer needed with side panel */
-        align-items: center !important;
-        justify-content: center !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
-        font-size: 20px !important;
-        border: 3px solid white !important;
-    ">
+    <div id="emergency-button" class="emergency-button">
         <i class="material-icons">flash_on</i>
     </div>
     
-    <!-- Enhanced emergency fallback script with multiple methods -->
-    <script>
-        // Add keyboard shortcut Alt+A for auto-fill (global)
-        document.addEventListener('keydown', function(e) {
-            if (e.altKey && e.key === 'a') {
-                console.log('Auto-fill keyboard shortcut used: Alt+A');
-                triggerAutofill();
-            }
-        });
-        
-        // Emergency fallback button
-        document.getElementById('emergency-button').addEventListener('click', function() {
-            console.log('Emergency button clicked');
-            alert('Emergency autofill triggered! This is a fallback in case regular buttons are not visible.');
-            triggerAutofill();
-        });
-        
-        // Centralized autofill trigger with multiple fallback methods
-        function triggerAutofill() {
-            console.log('Trying multiple autofill methods');
-            
-            // Method 1: Direct function call
-            if (typeof window.autoFillForm === 'function') {
-                console.log('Using window.autoFillForm()');
-                window.autoFillForm();
-                return;
-            }
-            
-            // Method 2: Try alternative casing
-            if (typeof window.autofillForm === 'function') {
-                console.log('Using window.autofillForm()');
-                window.autofillForm();
-                return;
-            }
-            
-            // Method 3: Click the button if it exists
-            const autofillButton = document.getElementById('autofill-button');
-            if (autofillButton) {
-                console.log('Clicking autofill-button');
-                autofillButton.click();
-                return;
-            }
-            
-            // Method 4: Message to content script
-            console.log('Sending message to content script');
-            try {
-                chrome.runtime.sendMessage({
-                    action: 'autoFillForm',
-                    formId: 'emergency',
-                    forceDetect: true
-                });
-            } catch (e) {
-                console.error('Chrome messaging failed:', e);
-                
-                // Method 5: Direct tabs messaging as absolute fallback
-                try {
-                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                        if (tabs[0]) {
-                            chrome.tabs.sendMessage(tabs[0].id, {
-                                action: 'autoFillForm',
-                                formId: 'any'
-                            });
-                        }
-                    });
-                } catch (e2) {
-                    console.error('All autofill methods failed:', e2);
-                    alert('Unable to trigger autofill. Please try another method or refresh the page.');
-                }
-            }
-        }
-        
-        // Command input fallback
-        document.addEventListener('DOMContentLoaded', function() {
-            const commandInput = document.getElementById('command-input');
-            const commandButton = document.getElementById('command-button');
-            
-            if (commandInput && commandButton) {
-                commandButton.addEventListener('click', processCommand);
-                commandInput.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') {
-                        processCommand();
-                    }
-                });
-            }
-            
-            function processCommand() {
-                const command = commandInput.value.trim().toLowerCase();
-                console.log('Command entered:', command);
-                
-                if (command === 'autofill') {
-                    triggerAutofill();
-                } else if (command === 'upload') {
-                    const uploadButton = document.getElementById('upload-pdf-button');
-                    if (uploadButton) {
-                        uploadButton.click();
-                    }
-                } else if (command === 'help') {
-                    const helpButton = document.getElementById('help-button');
-                    if (helpButton) {
-                        helpButton.click();
-                    }
-                } else {
-                    // Send as chat message
-                    const chatInput = document.getElementById('chat-input-field');
-                    const chatForm = document.getElementById('chat-form');
-                    if (chatInput && chatForm) {
-                        chatInput.value = command;
-                        chatForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-                    }
-                }
-                
-                // Clear the input
-                commandInput.value = '';
-            }
-        });
-        
-        // Fix layout and button visibility issues
-        window.addEventListener('load', function() {
-            console.log('Window loaded - applying button visibility fixes');
-            
-            // Force all buttons to be visible
-            document.querySelectorAll('button').forEach(button => {
-                // Skip if it's a close button or modal button
-                if (button.className.includes('close-button') || button.closest('.modal')) return;
-                
-                button.style.display = 'flex';
-                button.style.visibility = 'visible';
-                button.style.opacity = '1';
-                button.style.zIndex = '9999';
-            });
-            
-            // Make sure form containers are visible
-            document.querySelectorAll('form, .panel-actions, .chat-input').forEach(el => {
-                el.style.display = 'flex';
-                el.style.visibility = 'visible';
-                el.style.opacity = '1';
-                el.style.zIndex = '9000';
-            });
-            
-            console.log('Button visibility fixes applied');
-        });
-    </script>
+    <!-- Helper scripts -->
+    <script src="lib/panel-helpers.js"></script>
     
     <!-- Fix-layout script to ensure proper layout -->
     <script src="fix-layout.js"></script>

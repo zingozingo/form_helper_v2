@@ -1,260 +1,266 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Form Helper</title>
-    <style>
-        :root {
-            --primary-color: #4285F4;
-            --primary-dark: #3367D6;
-            --text-color: #333;
-            --light-text: #666;
-            --very-light-text: #999;
-            --border-color: #ddd;
-            --light-bg: #f5f5f5;
-            --white: #fff;
-            --success: #34A853;
-            --error: #EA4335;
-            --warning: #FBBC05;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: var(--font-family);
-            font-size: 14px;
-            color: var(--text-color);
-            background-color: var(--white);
-            min-width: 320px;
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 16px;
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-        
-        .logo {
-            width: 32px;
-            height: 32px;
-            margin-right: 12px;
-        }
-        
-        .title {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-        
-        .status {
-            display: flex;
-            align-items: center;
-            font-size: 13px;
-            margin-bottom: 16px;
-            padding: 8px 12px;
-            background-color: var(--light-bg);
-            border-radius: 6px;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-        
-        .connected {
-            background-color: var(--success);
-        }
-        
-        .disconnected {
-            background-color: var(--error);
-        }
-        
-        .settings-section {
-            margin-bottom: 16px;
-        }
-        
-        .settings-heading {
-            font-size: 15px;
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .setting-item:last-child {
-            border-bottom: none;
-        }
-        
-        .setting-label {
-            font-size: 14px;
-        }
-        
-        .setting-description {
-            font-size: 12px;
-            color: var(--light-text);
-            margin-top: 4px;
-        }
-        
-        /* Toggle Switch */
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 20px;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 20px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        
-        input:checked + .toggle-slider {
-            background-color: var(--primary-color);
-        }
-        
-        input:focus + .toggle-slider {
-            box-shadow: 0 0 1px var(--primary-color);
-        }
-        
-        input:checked + .toggle-slider:before {
-            transform: translateX(20px);
-        }
-        
-        .actions {
-            margin-top: 16px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-        }
-        
-        .button {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-        
-        .primary-button {
-            background-color: var(--primary-color);
-            color: var(--white);
-        }
-        
-        .primary-button:hover {
-            background-color: var(--primary-dark);
-        }
-        
-        .secondary-button {
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-        
-        .secondary-button:hover {
-            background-color: var(--border-color);
-        }
-        
-        .info-text {
-            font-size: 12px;
-            color: var(--light-text);
-            text-align: center;
-            margin-top: 16px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Form Helper v2.0</title>
+  <style>
+    :root {
+      --primary-color: #4285F4;
+      --primary-dark: #3367D6;
+      --success-color: #34A853;
+      --error-color: #EA4335;
+      --neutral-50: #F8F9FA;
+      --neutral-100: #F1F3F4;
+      --neutral-200: #E8EAED;
+      --neutral-700: #5F6368;
+      --neutral-900: #202124;
+      --shadow-sm: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+      --border-radius-sm: 4px;
+      --border-radius-md: 8px;
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --font-size-xs: 12px;
+      --font-size-sm: 14px;
+      --font-size-md: 16px;
+      --font-size-lg: 18px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      margin: 0;
+      padding: 0;
+      width: 300px;
+      color: var(--neutral-900);
+      background-color: white;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-md);
+      background-color: var(--primary-color);
+      color: white;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .logo {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--border-radius-sm);
+      background-color: white;
+      padding: 4px;
+    }
+    
+    h1 {
+      font-size: var(--font-size-lg);
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    .tagline {
+      font-size: var(--font-size-xs);
+      opacity: 0.9;
+      margin-top: var(--spacing-xs);
+    }
+    
+    .content {
+      padding: var(--spacing-md);
+    }
+    
+    .site-info {
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-md);
+      background-color: var(--neutral-50);
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--neutral-200);
+    }
+    
+    .site-name {
+      font-weight: 500;
+      word-break: break-all;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      font-size: var(--font-size-sm);
+    }
+    
+    .status-icon {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    
+    .status-icon.enabled {
+      background-color: var(--success-color);
+    }
+    
+    .status-icon.disabled {
+      background-color: var(--error-color);
+    }
+    
+    .status-icon.blocked {
+      background-color: var(--neutral-700);
+    }
+    
+    .toggle-section {
+      margin-bottom: var(--spacing-md);
+    }
+    
+    .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .3s;
+      border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: var(--success-color);
+    }
+    
+    input:focus + .toggle-slider {
+      box-shadow: 0 0 1px var(--success-color);
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
+    
+    .hint {
+      font-size: var(--font-size-xs);
+      color: var(--neutral-700);
+      margin-top: var(--spacing-xs);
+    }
+    
+    .blocklist-message {
+      padding: var(--spacing-md);
+      background-color: #FFEBEE;
+      border-radius: var(--border-radius-md);
+      font-size: var(--font-size-sm);
+      display: none;
+    }
+    
+    .blocklist-message.visible {
+      display: block;
+    }
+    
+    .footer {
+      font-size: var(--font-size-xs);
+      color: var(--neutral-700);
+      text-align: center;
+      padding: var(--spacing-md);
+      background-color: var(--neutral-50);
+      border-top: 1px solid var(--neutral-200);
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
     <div class="header">
-        <img src="icons/favicon-32x32.png" alt="Form Helper Logo" class="logo">
-        <div class="title">AI Form Helper</div>
-    </div>
-    
-    <div class="status">
-        <div id="status-dot" class="status-dot disconnected"></div>
-        <span id="status-text">Checking status...</span>
-    </div>
-    
-    <div id="connection-info" class="info-text" style="margin-bottom: 16px; display: none;">
-        Offline mode: Using local detection without AI server.
-    </div>
-    
-    <div class="settings-section">
-        <div class="settings-heading">Settings</div>
-        
-        <div class="setting-item">
-            <div class="setting-info">
-                <div class="setting-label">Debug Mode</div>
-                <div class="setting-description">Show form scores and detection details</div>
-            </div>
-            <label class="toggle-switch">
-                <input type="checkbox" id="debug-mode-toggle">
-                <span class="toggle-slider"></span>
-            </label>
+      <div class="logo-container">
+        <img src="icons/favicon-32x32.png" alt="Logo" class="logo">
+        <div>
+          <h1>AI Form Helper v2.0</h1>
+          <div class="tagline">Form assistance powered by AI</div>
         </div>
-        
-        <div class="setting-item">
-            <div class="setting-info">
-                <div class="setting-label">Panel Layout</div>
-                <div class="setting-description">Start with fields panel expanded</div>
-            </div>
-            <label class="toggle-switch">
-                <input type="checkbox" id="panel-expanded-toggle" checked>
-                <span class="toggle-slider"></span>
-            </label>
+      </div>
+    </div>
+    
+    <div class="content">
+      <div class="site-info">
+        <div class="site-name" id="current-site">Loading...</div>
+        <div class="status">
+          <div class="status-icon" id="status-icon"></div>
+          <span id="status-text">Checking status...</span>
         </div>
+      </div>
+      
+      <div id="blocklist-message" class="blocklist-message">
+        This site is blocked to protect your privacy. The extension will not run on social media and sensitive sites.
+      </div>
+      
+      <div class="toggle-section">
+        <div class="toggle-container">
+          <strong>Enable AI Form Helper</strong>
+          <label class="toggle-switch">
+            <input type="checkbox" id="extension-toggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="hint">Toggle to enable or disable the extension across all sites</p>
+      </div>
+      
+      <div class="toggle-section">
+        <div class="toggle-container">
+          <strong>Auto-detect Forms</strong>
+          <label class="toggle-switch">
+            <input type="checkbox" id="auto-detect-toggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="hint">Automatically detect and analyze forms on pages you visit</p>
+      </div>
     </div>
     
-    <div class="actions">
-        <button id="open-panel-button" class="button primary-button">Open Form Helper</button>
+    <div class="footer">
+      AI Form Helper v2.0 – <a href="https://example.com/form-helper-docs" target="_blank" rel="noopener noreferrer">Help</a>
     </div>
-    
-    <div class="info-text">
-        AI Form Helper v1.2.1
-    </div>
-    
-    <script src="popup.js"></script>
+  </div>
+  
+  <script src="popup.js"></script>
 </body>
 </html>

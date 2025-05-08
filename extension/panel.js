@@ -1,27 +1,21 @@
-// AI Form Helper panel.js - Enhanced UI version
+// AI Form Helper panel.js v2.0 - Button-activated panel version
 
 // Ensure the DOM is fully loaded before initializing
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Panel.js: DOMContentLoaded triggered");
+    console.log("Panel.js v2.0: DOMContentLoaded triggered");
     
-    // Debug button visibility
-    console.log("Checking buttons in DOM:");
-    const allButtons = document.querySelectorAll('button');
-    console.log(`Found ${allButtons.length} button elements:`, allButtons);
+    // Remove debug message
+    const debugMessage = document.querySelector('.debug-message');
+    if (debugMessage) {
+        debugMessage.style.display = 'none';
+    }
     
-    // Look for specific buttons
-    const sendBtn = document.getElementById('send-button');
-    const autofillBtn = document.getElementById('autofill-button');
-    const autofillProfileBtn = document.getElementById('autofill-profile');
-    const uploadPdfBtn = document.getElementById('upload-pdf-button');
-    const helpBtn = document.getElementById('help-button');
-    
-    console.log("Button visibility check:", {
-        "send-button": sendBtn ? "Found" : "Missing",
-        "autofill-button": autofillBtn ? "Found" : "Missing",
-        "autofill-profile": autofillProfileBtn ? "Found" : "Missing",
-        "upload-pdf-button": uploadPdfBtn ? "Found" : "Missing",
-        "help-button": helpBtn ? "Found" : "Missing"
+    // Version branding update
+    const headerElements = document.querySelectorAll('h1, h2, .panel-header');
+    headerElements.forEach(element => {
+        if (element.textContent.includes('AI Form Helper')) {
+            element.textContent = element.textContent.replace('AI Form Helper', 'AI Form Helper v2.0');
+        }
     });
     
     // API Configuration
@@ -137,11 +131,21 @@ document.addEventListener('DOMContentLoaded', function() {
         // Request form scan from content script
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
             if (tabs[0]) {
+                // First scan for forms
                 chrome.tabs.sendMessage(tabs[0].id, {action: 'scanForms'}, function(response) {
                     console.log('Scan forms response:', response);
+                    
+                    // Panel opened - enable field highlighting
+                    chrome.tabs.sendMessage(tabs[0].id, {
+                        action: 'toggleHighlighting',
+                        enabled: true
+                    });
                 });
             }
         });
+        
+        // Add panel appeared class for animations
+        document.body.classList.add('panel-appeared');
     }
     
     // Initialize markdown renderer
@@ -490,6 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const fieldItem = document.createElement('div');
         fieldItem.className = 'field-item';
         fieldItem.dataset.index = index;
+        fieldItem.dataset.fieldId = field.id || field.name || `field_${index}`;
         fieldItem.tabIndex = 0; // Make focusable
         fieldItem.setAttribute('role', 'button');
         fieldItem.setAttribute('aria-expanded', 'false');
@@ -497,13 +502,80 @@ document.addEventListener('DOMContentLoaded', function() {
         // Get field details
         const fieldLabel = field.label || field.name || 'Field ' + (index + 1);
         const fieldType = field.type || 'text';
-        const iconName = FIELD_ICONS[fieldType] || FIELD_ICONS.default;
         
-        // Create field icon
-        const iconEl = document.createElement('i');
-        iconEl.className = 'material-icons field-icon';
-        iconEl.textContent = iconName;
-        iconEl.setAttribute('aria-hidden', 'true');
+        // Determine field icon based on type and name patterns
+        let iconName = FIELD_ICONS[fieldType] || FIELD_ICONS.default;
+        
+        // Use more specific icons based on field name/label for better UX
+        const fieldLower = (fieldLabel + ' ' + (field.name || '')).toLowerCase();
+        
+        if (fieldLower.includes('username') || fieldLower.includes('user name') || 
+            fieldLower.includes('login id') || fieldLower.includes('account name')) {
+            iconName = 'person';
+        } else if (fieldLower.includes('password') || fieldLower.includes('pwd')) {
+            iconName = 'lock';
+        } else if (fieldLower.includes('email')) {
+            iconName = 'email';
+        } else if (fieldLower.includes('phone') || fieldLower.includes('tel') || fieldLower.includes('mobile')) {
+            iconName = 'phone';
+        } else if (fieldLower.includes('name')) {
+            if (fieldLower.includes('first') || fieldLower.includes('given')) {
+                iconName = 'badge';
+            } else if (fieldLower.includes('last') || fieldLower.includes('surname') || fieldLower.includes('family')) {
+                iconName = 'badge';
+            } else {
+                iconName = 'person';
+            }
+        } else if (fieldLower.includes('address') || fieldLower.includes('street')) {
+            iconName = 'home';
+        } else if (fieldLower.includes('city') || fieldLower.includes('town')) {
+            iconName = 'location_city';
+        } else if (fieldLower.includes('state') || fieldLower.includes('province')) {
+            iconName = 'map';
+        } else if (fieldLower.includes('zip') || fieldLower.includes('postal') || fieldLower.includes('code')) {
+            iconName = 'markunread_mailbox';
+        } else if (fieldLower.includes('country')) {
+            iconName = 'public';
+        } else if (fieldLower.includes('company') || fieldLower.includes('organization') || fieldLower.includes('employer')) {
+            iconName = 'business';
+        } else if (fieldLower.includes('credit') || fieldLower.includes('card') || fieldLower.includes('payment')) {
+            iconName = 'credit_card';
+        } else if (fieldLower.includes('cvv') || fieldLower.includes('cvc') || fieldLower.includes('security code')) {
+            iconName = 'security';
+        } else if (fieldLower.includes('birth') || fieldLower.includes('dob')) {
+            iconName = 'cake';
+        }
+        
+        // Set confidence indicator based on field properties
+        let confidence = 'high';
+        let confidenceScore = 100;
+        
+        // Reduce confidence if field is missing important properties
+        if (!field.name && !field.id) {
+            confidenceScore -= 30;
+        }
+        if (!field.label) {
+            confidenceScore -= 20;
+        }
+        if (field.type === 'text' && !fieldLower.includes('name') && !fieldLower.includes('address')) {
+            // Generic text field without specific purpose
+            confidenceScore -= 10;
+        }
+        
+        // Set confidence level based on score
+        if (confidenceScore <= 50) {
+            confidence = 'low';
+        } else if (confidenceScore <= 80) {
+            confidence = 'medium';
+        }
+        
+        // Create field icon with confidence indicator
+        const iconEl = document.createElement('div');
+        iconEl.className = 'field-icon-container';
+        iconEl.innerHTML = `
+            <i class="material-icons field-icon">${iconName}</i>
+            <span class="confidence-indicator confidence-${confidence}" title="Detection confidence: ${confidence}"></span>
+        `;
         
         // Create field details container
         const detailsEl = document.createElement('div');
@@ -513,10 +585,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const headerEl = document.createElement('div');
         headerEl.className = 'field-header';
         
-        // Create field name element
+        // Create field name element with cleaner label
         const nameEl = document.createElement('div');
         nameEl.className = 'field-name';
-        nameEl.textContent = fieldLabel;
+        
+        // Clean up the field label for better readability
+        let cleanLabel = fieldLabel;
+        // Remove common prefixes
+        cleanLabel = cleanLabel.replace(/^(frm|txt|input|field|ctl00|field_|input_|form_|ctl_|ui_|js_)/i, '');
+        // Replace underscores and camelCase with spaces
+        cleanLabel = cleanLabel.replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2');
+        // Capitalize first letter of each word
+        cleanLabel = cleanLabel.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+        
+        nameEl.textContent = cleanLabel;
         
         // Create field actions
         const actionsEl = document.createElement('div');
@@ -525,8 +609,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add quick-fill button
         const fillBtn = document.createElement('button');
         fillBtn.className = 'field-fill-button';
-        fillBtn.textContent = 'Fill';
-        fillBtn.setAttribute('aria-label', `Fill ${fieldLabel} field`);
+        fillBtn.innerHTML = '<i class="material-icons">auto_fix_high</i><span>Auto-fill</span>';
+        fillBtn.setAttribute('aria-label', `Auto-fill ${cleanLabel} field`);
         fillBtn.addEventListener('click', function(e) {
             e.stopPropagation(); // Prevent fieldItem click
             animateButton(fillBtn);
@@ -556,12 +640,50 @@ document.addEventListener('DOMContentLoaded', function() {
         typeEl.className = 'field-type';
         
         const typeIconEl = document.createElement('i');
-        typeIconEl.className = 'material-icons';
+        typeIconEl.className = 'material-icons type-icon';
         typeIconEl.textContent = iconName;
         typeIconEl.setAttribute('aria-hidden', 'true');
         
         typeEl.appendChild(typeIconEl);
-        typeEl.appendChild(document.createTextNode(fieldType));
+        
+        // Add better field type description
+        let typeDescription = fieldType;
+        if (fieldType === 'text') {
+            if (fieldLower.includes('email')) {
+                typeDescription = 'Email Address';
+            } else if (fieldLower.includes('name')) {
+                typeDescription = 'Name';
+            } else if (fieldLower.includes('address')) {
+                typeDescription = 'Address';
+            } else if (fieldLower.includes('phone') || fieldLower.includes('tel')) {
+                typeDescription = 'Phone Number';
+            } else if (fieldLower.includes('zip') || fieldLower.includes('postal')) {
+                typeDescription = 'Postal Code';
+            } else {
+                typeDescription = 'Text Field';
+            }
+        } else if (fieldType === 'password') {
+            typeDescription = 'Password';
+        } else if (fieldType === 'email') {
+            typeDescription = 'Email Address';
+        } else if (fieldType === 'tel') {
+            typeDescription = 'Phone Number';
+        } else if (fieldType === 'checkbox') {
+            typeDescription = 'Checkbox';
+        } else if (fieldType === 'radio') {
+            typeDescription = 'Radio Button';
+        } else if (fieldType === 'select' || fieldType === 'select-one') {
+            typeDescription = 'Dropdown Menu';
+        }
+        
+        typeEl.appendChild(document.createTextNode(typeDescription));
+        
+        // Add confidence text
+        const confidenceEl = document.createElement('span');
+        confidenceEl.className = `confidence-text confidence-${confidence}`;
+        confidenceEl.textContent = confidence === 'high' ? 'High Confidence' : 
+                                   confidence === 'medium' ? 'Medium Confidence' : 'Low Confidence';
+        typeEl.appendChild(confidenceEl);
         
         // Create expandable details section
         const expandedDetailsEl = document.createElement('div');

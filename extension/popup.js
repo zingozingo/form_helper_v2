@@ -1,186 +1,165 @@
-// AI Form Helper popup.js
+/**
+ * AI Form Helper - Popup Script
+ * 
+ * Simple popup UI for controlling the extension.
+ */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // DOM Elements
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const debugModeToggle = document.getElementById('debug-mode-toggle');
-    const panelExpandedToggle = document.getElementById('panel-expanded-toggle');
-    const openPanelButton = document.getElementById('open-panel-button');
+// DOM elements
+const elements = {
+  // Site information
+  currentSite: document.getElementById('current-site'),
+  statusIcon: document.getElementById('status-icon'),
+  statusText: document.getElementById('status-text'),
+  
+  // Messages
+  blocklistMessage: document.getElementById('blocklist-message'),
+  
+  // Toggles
+  extensionToggle: document.getElementById('extension-toggle'),
+  autoDetectToggle: document.getElementById('auto-detect-toggle')
+};
+
+// Current tab info
+let currentTab = null;
+let currentDomain = null;
+let isBlocked = false;
+
+// Initialize popup
+async function initializePopup() {
+  try {
+    // Get current tab status
+    await getTabStatus();
     
-    // API Configuration
-    const API_URL = 'http://localhost:8000/api/v1/status';
+    // Set up event listeners for toggles
+    elements.extensionToggle.addEventListener('change', async () => {
+      await toggleExtension(elements.extensionToggle.checked);
+    });
     
-    // Default settings
-    let appSettings = {
-        debugMode: false,
-        panelState: {
-            collapsed: false
-        },
-        isConnected: false,
-        offlineMode: {
-            enabled: true  // Allow offline functionality
+    elements.autoDetectToggle.addEventListener('change', async () => {
+      await toggleAutoDetect(elements.autoDetectToggle.checked);
+    });
+  } catch (e) {
+    console.error('Error initializing popup:', e);
+  }
+}
+
+// Get current tab status from background script
+async function getTabStatus() {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'getTabStatus'
+    });
+    
+    if (response && response.success) {
+      // Store tab info
+      currentTab = response.tabId;
+      currentDomain = response.domain;
+      isBlocked = response.blocked;
+      
+      // Update UI
+      updateUI(response);
+    } else {
+      console.error('Failed to get tab status:', response?.error);
+    }
+  } catch (e) {
+    console.error('Error getting tab status:', e);
+  }
+}
+
+// Update UI based on current status
+function updateUI(status) {
+  // Update domain display
+  elements.currentSite.textContent = status.domain || 'unknown';
+  
+  // Update toggle states
+  elements.extensionToggle.checked = status.settings?.enabled !== false;
+  elements.autoDetectToggle.checked = status.settings?.autoDetectForms !== false;
+  
+  // Update status indicator
+  if (status.blocked) {
+    // Domain is blocked
+    elements.statusIcon.className = 'status-icon blocked';
+    elements.statusText.textContent = 'Blocked domain';
+    elements.blocklistMessage.classList.add('visible');
+    elements.extensionToggle.disabled = true;
+    elements.autoDetectToggle.disabled = true;
+  } else if (status.settings?.enabled === false) {
+    // Extension is disabled globally
+    elements.statusIcon.className = 'status-icon disabled';
+    elements.statusText.textContent = 'Extension disabled';
+    elements.autoDetectToggle.disabled = true;
+  } else {
+    // Extension is active
+    elements.statusIcon.className = 'status-icon enabled';
+    elements.statusText.textContent = 'Extension active';
+    elements.autoDetectToggle.disabled = false;
+    
+    // If forms were detected, show that info
+    if (status.formResults && status.formResults.formFound) {
+      const fieldCount = status.formResults.fields ? status.formResults.fields.length : 0;
+      elements.statusText.textContent = `Form detected (${fieldCount} fields)`;
+    }
+  }
+}
+
+// Toggle the whole extension
+async function toggleExtension(enabled) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'toggleExtension',
+      enabled
+    });
+    
+    if (response && response.success) {
+      // Update UI
+      if (enabled) {
+        elements.statusIcon.className = 'status-icon enabled';
+        elements.statusText.textContent = 'Extension active';
+        elements.autoDetectToggle.disabled = false;
+        
+        // Activate on the current tab if not blocked
+        if (!isBlocked) {
+          chrome.runtime.sendMessage({
+            action: 'activateOnCurrentTab'
+          });
         }
-    };
-    
-    // Initialize the popup
-    init();
-    
-    function init() {
-        // Load settings from storage
-        loadSettings();
-        
-        // Check backend connection after a short delay
-        // This allows the UI to render first
-        setTimeout(() => {
-            checkBackendConnection();
-        }, 100);
-        
-        // Set up event listeners
-        setupEventListeners();
-        
-        // Add version check and update
-        checkVersionAndUpdate();
+      } else {
+        elements.statusIcon.className = 'status-icon disabled';
+        elements.statusText.textContent = 'Extension disabled';
+        elements.autoDetectToggle.disabled = true;
+      }
+    } else {
+      // Revert toggle state on failure
+      elements.extensionToggle.checked = !enabled;
+      console.error('Failed to toggle extension:', response?.error);
     }
+  } catch (e) {
+    // Revert toggle state on error
+    elements.extensionToggle.checked = !enabled;
+    console.error('Error toggling extension:', e);
+  }
+}
+
+// Toggle auto-detect setting
+async function toggleAutoDetect(enabled) {
+  try {
+    // Get current settings
+    const data = await chrome.storage.local.get('formhelper_settings');
+    const settings = data.formhelper_settings || {};
     
-    // Load settings from storage
-    function loadSettings() {
-        chrome.storage.local.get(['formHelperSettings'], function(result) {
-            if (result.formHelperSettings) {
-                appSettings = result.formHelperSettings;
-                
-                // Update UI to reflect current settings
-                debugModeToggle.checked = appSettings.debugMode;
-                panelExpandedToggle.checked = !appSettings.panelState.collapsed;
-                
-                console.log('Settings loaded:', appSettings);
-            } else {
-                // Initialize with default settings if none exist
-                saveSettings();
-            }
-        });
-    }
+    // Update auto-detect setting
+    settings.autoDetectForms = enabled;
     
-    // Save settings to storage
-    function saveSettings() {
-        chrome.storage.local.set({
-            formHelperSettings: appSettings
-        }, function() {
-            console.log('Settings saved:', appSettings);
-        });
-    }
+    // Save updated settings
+    await chrome.storage.local.set({ 'formhelper_settings': settings });
     
-    // Set up event listeners
-    function setupEventListeners() {
-        // Debug mode toggle
-        if (debugModeToggle) {
-            debugModeToggle.addEventListener('change', function() {
-                appSettings.debugMode = debugModeToggle.checked;
-                saveSettings();
-            });
-        }
-        
-        // Panel expanded toggle
-        if (panelExpandedToggle) {
-            panelExpandedToggle.addEventListener('change', function() {
-                appSettings.panelState.collapsed = !panelExpandedToggle.checked;
-                saveSettings();
-            });
-        }
-        
-        // Open panel button
-        if (openPanelButton) {
-            openPanelButton.addEventListener('click', function() {
-                // Open the form helper panel as a popup window instead of side panel
-                chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-                    if (tabs && tabs[0]) {
-                        // Open as a popup window
-                        chrome.windows.create({
-                            url: chrome.runtime.getURL('panel-fixed.html'),
-                            type: 'popup',
-                            width: 400,
-                            height: 600
-                        });
-                        
-                        // Also scan forms on the current page
-                        chrome.tabs.sendMessage(tabs[0].id, {action: 'scanForms'});
-                    }
-                });
-                
-                // Close the popup
-                window.close();
-            });
-        }
-    }
-    
-    // Check backend connection
-    function checkBackendConnection() {
-        // Use AbortController to implement a timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);  // 2 second timeout
-        
-        fetch(API_URL, { 
-            signal: controller.signal,
-            // Add cache-busting parameter
-            headers: { 'Cache-Control': 'no-cache' }
-        })
-            .then(response => {
-                clearTimeout(timeoutId);
-                if (response.ok) {
-                    updateConnectionStatus(true);
-                } else {
-                    console.log('Server responded with status:', response.status);
-                    updateConnectionStatus(false);
-                }
-            })
-            .catch(error => {
-                clearTimeout(timeoutId);
-                // Don't show error in console, just handle gracefully
-                console.log('Operating in offline mode:', error.name);
-                updateConnectionStatus(false);
-            });
-    }
-    
-    // Update connection status in UI
-    function updateConnectionStatus(isConnected) {
-        if (statusDot && statusText) {
-            const connectionInfo = document.getElementById('connection-info');
-            
-            if (isConnected) {
-                statusDot.className = 'status-dot connected';
-                statusText.textContent = 'Server Connected';
-                // Hide offline mode info
-                if (connectionInfo) connectionInfo.style.display = 'none';
-            } else {
-                statusDot.className = 'status-dot disconnected';
-                statusText.textContent = 'Offline Mode';
-                // Show offline mode info
-                if (connectionInfo) connectionInfo.style.display = 'block';
-            }
-        }
-        
-        // Update app settings with connection status
-        appSettings.isConnected = isConnected;
-        saveSettings();
-    }
-    
-    // Check version and update if needed
-    function checkVersionAndUpdate() {
-        const currentVersion = '1.2.1'; // Update this with each release
-        
-        chrome.storage.local.get(['lastVersion'], function(result) {
-            if (!result.lastVersion || result.lastVersion !== currentVersion) {
-                // Update version
-                chrome.storage.local.set({ lastVersion: currentVersion });
-                
-                // Update version display in UI
-                const versionInfo = document.querySelector('.info-text');
-                if (versionInfo) {
-                    versionInfo.textContent = `AI Form Helper v${currentVersion}`;
-                }
-                
-                console.log(`Updated to version ${currentVersion}`);
-            }
-        });
-    }
-});
+    console.log('Auto-detect setting updated:', enabled);
+  } catch (e) {
+    // Revert toggle state on error
+    elements.autoDetectToggle.checked = !enabled;
+    console.error('Error updating auto-detect setting:', e);
+  }
+}
+
+// Run initialization when DOM is loaded
+document.addEventListener('DOMContentLoaded', initializePopup);

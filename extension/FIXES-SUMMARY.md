@@ -1,6 +1,45 @@
 # AI Form Helper Extension Fixes
 
-This document summarizes the comprehensive fixes implemented to address missing buttons and form detection issues in the AI Form Helper extension.
+This document summarizes the comprehensive fixes implemented to address issues in the AI Form Helper extension.
+
+## Issue 0: Extension Appearing on Non-Form Websites (CRITICAL)
+
+**Problems Identified:**
+- Extension activating on social media sites (Instagram, LinkedIn, etc.)
+- UI elements appearing inappropriately on non-form websites
+- Previous fixes insufficiently contained the extension
+- Attempted blacklists and domain checks not fully effective
+- Extension generating console errors on non-form sites
+
+**Implemented Solution: Complete Architectural Rebuild**
+
+1. **Opt-In Activation Model**
+   - Extension is OFF by default on ALL sites
+   - No automatic content script injection
+   - User must explicitly click "Analyze This Page" button
+   - Form analysis only runs after explicit activation
+   - Allowlist system to remember user choices
+
+2. **Technical Implementation**
+   - Completely redesigned manifest.json without content_scripts entries
+   - Added declarativeNetRequest for additional blocking on social sites
+   - Implemented chrome.storage.local allowlist management
+   - Created controlled script injection via chrome.scripting.executeScript
+   - Developed popup UI with explicit activation controls
+
+3. **Multiple Protection Layers**
+   - declarativeNetRequest rules block resources on social media sites
+   - Background service worker controls all script injection
+   - Strict allowlist validation prevents unauthorized execution
+   - Badge indicators show current extension state
+   - Domain analysis ensures consistent application
+
+4. **User Experience Improvements**
+   - Clear UI showing where extension is allowed
+   - Simple toggle to add/remove sites from allowlist
+   - Visual feedback during analysis
+   - Unified results display in popup
+   - Settings page to manage allowlist
 
 ## Issue 1: Missing UI Buttons in Panel
 

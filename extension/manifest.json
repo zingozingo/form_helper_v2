@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Form Helper",
-  "version": "1.0",
-  "description": "An AI-powered assistant for filling out forms with sophisticated form detection",
+  "version": "2.0",
+  "description": "An AI-powered assistant that helps you fill out forms with a simple button interface",
   "icons": {
     "16": "icons/favicon-16x16.png",
     "32": "icons/favicon-32x32.png",
@@ -15,24 +15,19 @@
       "32": "icons/favicon-32x32.png",
       "192": "icons/android-chrome-192x192.png"
     },
-    "default_title": "AI Form Helper"
-  },
-  "side_panel": {
-    "default_path": "panel-fixed.html"
+    "default_title": "AI Form Helper v2.0",
+    "default_popup": "popup.html"
   },
   "permissions": [
     "activeTab",
     "scripting",
     "storage",
-    "contextMenus",
-    "sidePanel"
+    "declarativeNetRequest",
+    "notifications"
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "http://127.0.0.1:8000/*",
-    "https://testpages.herokuapp.com/*",
-    "https://*/*",
-    "http://*/*"
+    "http://127.0.0.1:8000/*"
   ],
   "background": {
     "service_worker": "background.js",
@@ -41,55 +36,37 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["site-blocker.js"],
-      "run_at": "document_start",
-      "all_frames": true
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": [
-        "core/logger.js",
-        "core/site-blocklist.js",
-        "core/user-settings.js",
-        "core/form-validator.js",
-        "core/strict-initializer.js",
-        "core/activation-monitor.js"
+      "exclude_matches": [
+        "*://*.instagram.com/*",
+        "*://*.facebook.com/*",
+        "*://*.linkedin.com/*",
+        "*://*.twitter.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.pinterest.com/*",
+        "*://*.youtube.com/*",
+        "*://*.reddit.com/*",
+        "*://*.snapchat.com/*"
       ],
-      "run_at": "document_start"
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": [
-        "form_context_detector.js",
-        "formQualityAnalyzer.js",
-        "enhanced-form-detection.js",
-        "enhanced-field-detector.js",
-        "field-detector.js",
-        "content.js"
-      ],
-      "run_at": "document_end"
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": [
-        "content-field-detection-fix.js",
-        "debug-field-detection.js"
-      ],
-      "run_at": "document_end"
-    },
-    {
-      "matches": ["<all_urls>"],
-      "js": ["button-visibility-fix.js"],
-      "all_frames": true,
+      "js": ["content.js"],
       "run_at": "document_end"
     }
   ],
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "ruleset_1",
+      "enabled": true,
+      "path": "rules.json"
+    }]
+  },
   "web_accessible_resources": [
     {
       "resources": [
         "styles.css",
+        "panel.html",
+        "panel.js",
         "icons/*.png",
-        "*.js"
+        "lib/*.js",
+        "lib/*.css"
       ],
       "matches": ["<all_urls>"]
     }
