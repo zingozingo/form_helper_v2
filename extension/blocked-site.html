@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Helper - Site Blocked</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      background-color: #ffebee;
+      color: #b71c1c;
+      margin: 0;
+      padding: 20px;
+      width: 350px;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(183, 28, 28, 0.2);
+    }
+    
+    .icon {
+      font-size: 24px;
+    }
+    
+    h1 {
+      font-size: 16px;
+      margin: 0;
+      font-weight: 600;
+    }
+    
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+    
+    .message {
+      padding: 12px;
+      background-color: white;
+      border-radius: 6px;
+      border-left: 4px solid #b71c1c;
+    }
+    
+    .site-info {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background-color: rgba(255, 255, 255, 0.7);
+      border-radius: 6px;
+    }
+    
+    .site-name {
+      font-weight: 600;
+      word-break: break-all;
+    }
+    
+    .reason {
+      font-size: 13px;
+    }
+    
+    .footer {
+      font-size: 12px;
+      color: #d32f2f;
+      text-align: center;
+      margin-top: 12px;
+    }
+    
+    .developer-mode {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #fffde7;
+      border: 1px solid #f9a825;
+      border-radius: 6px;
+      color: #f57f17;
+    }
+    
+    .developer-button {
+      margin-top: 10px;
+      background-color: #f57f17;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .developer-button:hover {
+      background-color: #ff8f00;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="icon">🚫</div>
+      <h1>Extension Blocked on This Site</h1>
+    </div>
+    
+    <div class="message">
+      <p>Form Helper has been blocked on this site for your protection. The extension is designed to only work on form-specific websites.</p>
+    </div>
+    
+    <div class="site-info">
+      <p>Site: <span id="site-hostname" class="site-name">unknown</span></p>
+      <p class="reason">Reason: <span id="block-reason">emergency killswitch</span></p>
+    </div>
+    
+    <div id="developer-section" class="developer-mode hidden">
+      <p><strong>Developer Override</strong></p>
+      <p>Warning: Only use this for legitimate form testing purposes.</p>
+      <button id="override-button" class="developer-button">Override For This Session Only</button>
+    </div>
+    
+    <div class="footer">
+      <p>If you believe this is an error, please contact the extension authors.</p>
+    </div>
+  </div>
+
+  <script src="blocked-site.js"></script>
+</body>
+</html>

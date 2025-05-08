@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Form Helper</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        /* Base styles */
+        :root {
+            --primary: #4285F4;
+            --secondary: #5F6368;
+            --border: #E1E3E6;
+            --text: #202124;
+            --background: #FFFFFF;
+            --background-light: #F8F9FA;
+            --required: #FA8072;
+            --optional: #9AA0A6;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12);
+            --radius: 8px;
+            --transition: 0.2s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: var(--text);
+            background-color: var(--background);
+            font-size: 14px;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header styles */
+        .header {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--background);
+        }
+        
+        .title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #34A853; /* Active green */
+            display: inline-block;
+            margin-left: 8px;
+        }
+        
+        /* Main container */
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Fields section */
+        .fields-container {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+            transition: max-height var(--transition);
+            max-height: 70px;
+            overflow: hidden;
+        }
+        
+        .fields-container.collapsed {
+            max-height: 36px;
+        }
+        
+        .fields-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .fields-header h2 {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .toggle-icon {
+            font-size: 18px;
+            color: var(--secondary);
+            transition: transform var(--transition);
+        }
+        
+        .fields-container.collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
+        
+        .fields-scroll {
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 4px;
+            scrollbar-width: thin;
+        }
+        
+        .fields-scroll::-webkit-scrollbar {
+            height: 4px;
+        }
+        
+        .fields-scroll::-webkit-scrollbar-thumb {
+            background-color: var(--border);
+            border-radius: 2px;
+        }
+        
+        .field-chips {
+            display: inline-flex;
+            gap: 8px;
+            padding: 2px 0;
+        }
+        
+        .field-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            background-color: var(--background-light);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all var(--transition);
+        }
+        
+        .field-chip:hover {
+            background-color: rgba(66, 133, 244, 0.08);
+            border-color: var(--primary);
+        }
+        
+        .field-chip.required {
+            border-color: var(--required);
+        }
+        
+        .field-chip.optional {
+            border-color: var(--optional);
+        }
+        
+        .field-icon {
+            font-size: 14px;
+            margin-right: 4px;
+            color: var(--secondary);
+        }
+        
+        /* Chat section */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-bottom: 8px;
+        }
+        
+        .message {
+            display: flex;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+        }
+        
+        .message-bubble {
+            background-color: var(--background-light);
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            position: relative;
+        }
+        
+        .user-message .message-bubble {
+            background-color: var(--primary);
+            color: white;
+            border-radius: var(--radius);
+        }
+        
+        .message-time {
+            font-size: 10px;
+            color: var(--secondary);
+            margin-top: 4px;
+            text-align: right;
+            opacity: 0.7;
+        }
+        
+        /* Input section */
+        .input-container {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+            background-color: var(--background);
+        }
+        
+        .input-form {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color var(--transition);
+        }
+        
+        .input-field:focus {
+            border-color: var(--primary);
+        }
+        
+        .send-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color var(--transition);
+        }
+        
+        .send-button:hover {
+            background-color: #3367D6;
+        }
+        
+        /* Action buttons */
+        .action-bar {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .autofill-button {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: background-color var(--transition);
+        }
+        
+        .autofill-button:hover {
+            background-color: #3367D6;
+        }
+        
+        .clear-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            background-color: transparent;
+            color: var(--secondary);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color var(--transition);
+            margin-left: auto;
+        }
+        
+        .clear-button:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        
+        /* Tooltips */
+        [data-tooltip] {
+            position: relative;
+        }
+        
+        [data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1 class="title">
+            <i class="material-icons" style="font-size: 18px;">smart_toy</i>
+            AI Form Helper
+            <span class="status" title="Connected to form"></span>
+        </h1>
+    </header>
+    
+    <!-- Main container -->
+    <div class="container">
+        <!-- Fields section -->
+        <div class="fields-container" id="fields-container">
+            <div class="fields-header" id="fields-toggle">
+                <h2>Form Fields <span id="field-count">(3)</span></h2>
+                <i class="material-icons toggle-icon">expand_more</i>
+            </div>
+            <div class="fields-scroll">
+                <div class="field-chips" id="field-chips">
+                    <!-- Field chips will be dynamically populated -->
+                    <div class="field-chip required" data-field-id="name" data-tooltip="Click to ask about this field">
+                        <i class="material-icons field-icon">text_fields</i>
+                        <span>Name</span>
+                    </div>
+                    <div class="field-chip required" data-field-id="email" data-tooltip="Click to ask about this field">
+                        <i class="material-icons field-icon">email</i>
+                        <span>Email</span>
+                    </div>
+                    <div class="field-chip required" data-field-id="password" data-tooltip="Click to ask about this field">
+                        <i class="material-icons field-icon">password</i>
+                        <span>Password</span>
+                    </div>
+                    <div class="field-chip optional" data-field-id="phone" data-tooltip="Click to ask about this field">
+                        <i class="material-icons field-icon">phone</i>
+                        <span>Phone</span>
+                    </div>
+                    <div class="field-chip optional" data-field-id="address" data-tooltip="Click to ask about this field">
+                        <i class="material-icons field-icon">home</i>
+                        <span>Address</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat section -->
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <!-- Initial welcome message -->
+                <div class="message ai-message">
+                    <div class="message-bubble">
+                        I've analyzed the form on this page. Click on any field above or ask me any questions about filling out this form.
+                    </div>
+                </div>
+                <!-- Messages will be dynamically added here -->
+            </div>
+        </div>
+        
+        <!-- Input section -->
+        <div class="action-bar">
+            <button class="autofill-button" id="autofill-button">
+                <i class="material-icons" style="font-size: 16px;">auto_fix_high</i>
+                Auto-fill Form
+            </button>
+            <button class="clear-button" id="clear-button" data-tooltip="Clear Form">
+                <i class="material-icons">clear_all</i>
+            </button>
+        </div>
+        
+        <div class="input-container">
+            <form class="input-form" id="chat-form">
+                <input type="text" class="input-field" id="chat-input" placeholder="Ask about this form..." aria-label="Type your message">
+                <button type="submit" class="send-button" id="send-button">
+                    <i class="material-icons">send</i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM elements
+            const fieldsContainer = document.getElementById('fields-container');
+            const fieldsToggle = document.getElementById('fields-toggle');
+            const fieldChips = document.getElementById('field-chips').querySelectorAll('.field-chip');
+            const messages = document.getElementById('messages');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+            const sendButton = document.getElementById('send-button');
+            const autofillButton = document.getElementById('autofill-button');
+            const clearButton = document.getElementById('clear-button');
+            
+            // Toggle fields section
+            fieldsToggle.addEventListener('click', function() {
+                fieldsContainer.classList.toggle('collapsed');
+            });
+            
+            // Field click handler
+            fieldChips.forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const fieldName = this.querySelector('span').textContent;
+                    const fieldId = this.dataset.fieldId;
+                    const isRequired = this.classList.contains('required');
+                    
+                    // Add user message
+                    addUserMessage(`Tell me about the ${fieldName} field`);
+                    
+                    // Send to the background/content script in a real implementation
+                    setTimeout(() => {
+                        // Simulate AI response
+                        const requiredText = isRequired ? "required" : "optional";
+                        addAiMessage(`The ${fieldName} field is ${requiredText}. ${getFieldDescription(fieldName.toLowerCase())}`);
+                    }, 500);
+                });
+            });
+            
+            // Chat form submission
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const message = chatInput.value.trim();
+                
+                if (message) {
+                    // Add user message
+                    addUserMessage(message);
+                    
+                    // Clear input
+                    chatInput.value = '';
+                    
+                    // In a real implementation, this would send to background/content script
+                    setTimeout(() => {
+                        // Simulate AI response
+                        if (message.toLowerCase().includes('autofill')) {
+                            handleAutofill();
+                        } else if (message.toLowerCase().includes('clear')) {
+                            handleClear();
+                        } else {
+                            addAiMessage(getGenericResponse(message));
+                        }
+                    }, 700);
+                }
+            });
+            
+            // Autofill button click
+            autofillButton.addEventListener('click', handleAutofill);
+            
+            // Clear button click
+            clearButton.addEventListener('click', handleClear);
+            
+            // Keyboard shortcut for autofill (Alt+A)
+            document.addEventListener('keydown', function(e) {
+                if (e.altKey && e.key === 'a') {
+                    handleAutofill();
+                }
+            });
+            
+            // Helper functions
+            function addUserMessage(text) {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message user-message';
+                messageElement.innerHTML = `
+                    <div class="message-bubble">${text}</div>
+                `;
+                messages.appendChild(messageElement);
+                scrollToBottom();
+            }
+            
+            function addAiMessage(text) {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message ai-message';
+                messageElement.innerHTML = `
+                    <div class="message-bubble">${text}</div>
+                `;
+                messages.appendChild(messageElement);
+                scrollToBottom();
+            }
+            
+            function scrollToBottom() {
+                const chatContainer = document.querySelector('.chat-container');
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+            
+            function handleAutofill() {
+                // In a real implementation, this would communicate with content script
+                addAiMessage("I've auto-filled the form for you. Please review the information before submitting.");
+                // Animation for feedback
+                autofillButton.style.backgroundColor = '#34A853';
+                setTimeout(() => {
+                    autofillButton.style.backgroundColor = '';
+                }, 1000);
+            }
+            
+            function handleClear() {
+                // In a real implementation, this would communicate with content script
+                addAiMessage("I've cleared all form fields.");
+            }
+            
+            function getFieldDescription(fieldName) {
+                const descriptions = {
+                    'name': "This is where you enter your full name as it appears on official documents.",
+                    'email': "Enter a valid email address that you check regularly, as this will be used for account confirmation and communication.",
+                    'password': "Create a secure password with at least 8 characters, including uppercase letters, numbers, and special characters.",
+                    'phone': "Your contact phone number, typically formatted as (XXX) XXX-XXXX or similar based on your country.",
+                    'address': "Your physical mailing address where you can receive correspondence."
+                };
+                
+                return descriptions[fieldName] || "Please fill this field accurately.";
+            }
+            
+            function getGenericResponse(message) {
+                // Simple response logic
+                if (message.toLowerCase().includes('password')) {
+                    return "Your password should be at least 8 characters long and include uppercase letters, numbers, and special characters for better security.";
+                } else if (message.toLowerCase().includes('required')) {
+                    return "Fields marked with a red border are required and must be filled before submitting the form.";
+                } else if (message.toLowerCase().includes('help')) {
+                    return "I can help you understand any field in this form. Just click on a field chip above or ask me a specific question.";
+                } else {
+                    return "This appears to be a registration form. I can help you understand any field or answer questions about how to fill it out correctly.";
+                }
+            }
+            
+            // Initial scroll to bottom
+            scrollToBottom();
+        });
+    </script>
+    
+    <!-- Connect with extension API -->
+    <script src="panel-minimal.js"></script>
+</body>
+</html>

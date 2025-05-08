@@ -4,462 +4,400 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Form Helper</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <!-- Fix: Marked should be loaded as a script, not stylesheet -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Critical CSS Overrides for Button Visibility -->
     <style>
-        :root {
-            --primary-color: #4285F4;
-            --primary-dark: #3367D6;
-            --text-color: #333;
-            --light-text: #666;
-            --very-light-text: #999;
-            --border-color: #ddd;
-            --light-bg: #f5f5f5;
-            --white: #fff;
-            --success: #34A853;
-            --error: #EA4335;
-            --warning: #FBBC05;
-            --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        /* Force critical buttons to always be visible */
+        #autofill-button, 
+        #send-button, 
+        #upload-pdf-button, 
+        #emergency-button,
+        .panel-actions, 
+        .chat-input button {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 10000 !important;
+            position: relative !important;
+            pointer-events: auto !important;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        
+        /* Enhanced button styling */
+        .primary-button, .secondary-button {
+            min-height: 44px !important;
+            min-width: 100px !important;
+            border: 2px solid #000 !important;
+            margin: 5px !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
         }
-
-        body {
-            font-family: var(--font-family);
-            font-size: 14px;
-            color: var(--text-color);
-            background-color: var(--white);
-            line-height: 1.5;
-            height: 100vh;
-            overflow: hidden;
+        
+        /* Enhanced container styling */
+        .panel-actions {
+            background-color: white !important;
+            border-top: 2px solid #ddd !important;
+            padding: 10px !important;
+            min-height: 60px !important;
         }
-
-        .panel-content {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            max-width: 100%;
+        
+        /* Fix stacking context issues */
+        .container {
+            z-index: 1 !important;
         }
-
-        .header {
-            padding: 12px 16px;
-            background-color: var(--primary-color);
-            color: var(--white);
-            border-bottom: 1px solid var(--primary-dark);
-            text-align: center;
-            box-shadow: var(--shadow);
-            position: relative;
-            z-index: 10;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        
+        .fields-panel, .chat-panel {
+            z-index: 5 !important;
         }
-
-        .header h1 {
-            font-size: 18px;
-            font-weight: 500;
-            margin: 0;
-            flex: 1;
+        
+        /* Force emergency button on top */
+        #emergency-button {
+            z-index: 2147483647 !important; /* Maximum z-index */
         }
-
-        .server-status {
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-
-        .connected {
-            background-color: var(--success);
-        }
-
-        .disconnected {
-            background-color: var(--error);
-        }
-
-        .main {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            overflow: hidden;
-        }
-
-        .status-message {
-            padding: 8px 16px;
-            background-color: var(--light-bg);
-            color: var(--light-text);
-            text-align: center;
-            font-size: 12px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .fields-container {
-            flex: 0 0 auto;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--border-color);
-            background-color: var(--light-bg);
-            max-height: 30vh;
-            overflow-y: auto;
-        }
-
-        .fields-list {
-            margin-bottom: 12px;
-        }
-
-        .field-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            border-radius: 4px;
-            margin-bottom: 6px;
-            background-color: var(--white);
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .field-item:hover {
-            background-color: rgba(66, 133, 244, 0.05);
-            border-color: var(--primary-color);
-        }
-
-        .field-item.selected {
-            background-color: rgba(66, 133, 244, 0.1);
-            border-color: var(--primary-color);
-        }
-
-        .field-icon {
-            margin-right: 12px;
-            font-size: 16px;
-            color: var(--light-text);
-        }
-
-        .field-details {
-            flex: 1;
-        }
-
-        .field-label {
-            font-weight: 500;
-            margin-bottom: 2px;
-        }
-
-        .field-type {
-            font-size: 12px;
-            color: var(--light-text);
-        }
-
-        .required-field {
-            background-color: var(--error);
-            color: var(--white);
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 8px;
-        }
-
-        .auto-fill-button {
-            display: block;
-            width: 100%;
-            padding: 8px 16px;
-            background-color: var(--primary-color);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .auto-fill-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .chat-container {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-message {
-            margin-bottom: 12px;
-            max-width: 85%;
-            clear: both;
-        }
-
-        .user-message {
-            float: right;
-            align-self: flex-end;
-        }
-
-        .ai-message {
-            float: left;
-            align-self: flex-start;
-        }
-
-        .system-message {
-            width: 100%;
-            text-align: center;
-            margin: 8px 0;
-            clear: both;
-        }
-
-        .user-message {
-            background-color: var(--primary-color);
-            color: var(--white);
-            border-radius: 18px;
-            border-top-right-radius: 4px;
-            padding: 10px 12px;
-        }
-
-        .ai-message {
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            border-radius: 18px;
-            border-top-left-radius: 4px;
-            padding: 10px 12px;
-        }
-
-        .ai-message .message-text {
-            white-space: pre-wrap;
-        }
-
-        .system-message {
-            background-color: rgba(0, 0, 0, 0.05);
-            color: var(--light-text);
-            font-size: 12px;
-            padding: 6px 10px;
-            border-radius: 12px;
-        }
-
-        .thinking-indicator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 12px;
-            margin: 8px 0;
-            background-color: #f1f3f4;
-            border-radius: 16px;
-            align-self: flex-start;
-            font-style: italic;
-            color: #5f6368;
-        }
-
-        .chat-form {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            background-color: var(--white);
-            border-top: 1px solid var(--border-color);
-        }
-
-        #chat-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 20px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s ease;
-        }
-
-        #chat-input:focus {
-            border-color: var(--primary-color);
-        }
-
-        #send-button {
-            margin-left: 8px;
-            padding: 8px 16px;
-            background-color: var(--primary-color);
-            color: var(--white);
-            border: none;
-            border-radius: 20px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        #send-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .no-forms-message {
-            padding: 16px;
-            text-align: center;
-            color: var(--light-text);
-        }
-
-        /* PDF Upload Section Styles */
-        .upload-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background-color: var(--light-bg);
-            border-radius: 8px;
-            margin: 16px;
-            border: 2px dashed var(--border-color);
-            text-align: center;
-        }
-
-        .upload-icon {
-            font-size: 48px;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-        }
-
-        .upload-text {
-            margin-bottom: 16px;
-            color: var(--light-text);
-        }
-
-        .upload-button {
-            padding: 8px 16px;
-            background-color: var(--primary-color);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .upload-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        #pdf-upload {
-            display: none;
-        }
-
-        /* Loading Spinner */
-        .loader-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 32px;
-            text-align: center;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(66, 133, 244, 0.2);
-            border-radius: 50%;
-            border-top-color: var(--primary-color);
-            animation: spin 1s ease-in-out infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 12px;
-        }
-
-        .action-button {
-            flex: 1;
-            padding: 8px;
-            margin: 0 4px;
-            border: none;
-            border-radius: 4px;
-            background-color: var(--primary-color);
-            color: white;
-            cursor: pointer;
-            font-size: 13px;
-            transition: background-color 0.2s;
-        }
-
-        .action-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        .action-button.secondary {
-            background-color: var(--light-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-        }
-
-        .action-button.secondary:hover {
-            background-color: var(--border-color);
+        
+        /* Ensure proper display for debugging */
+        .debug-message {
+            display: block !important;
         }
     </style>
 </head>
 <body>
-    <div class="panel-content">
-        <div class="header">
-            <h1>AI Form Helper</h1>
-            <div class="server-status">
-                <div id="status-dot" class="status-dot disconnected"></div>
-                <span id="status-text">Connecting...</span>
+    <!-- Debug message to help with button issues - ALWAYS VISIBLE NOW -->
+    <div class="debug-message" style="background-color:#FFFACD; padding:8px; border:1px solid #FFDC00; margin-bottom:10px; font-size:12px;">
+        <p><strong>BUTTON DEBUG INFO:</strong> If buttons aren't visible, try any of these options:</p>
+        <ol style="margin-left:20px; margin-top:5px;">
+            <p>1. Press Alt+A to autofill the form via keyboard shortcut</p>
+            <p>2. Type 'autofill' in the chat and press Enter</p>
+        </ol>
+    </div>
+    
+    <div class="container" id="main-container">
+        <!-- Fields Panel -->
+        <div id="fields-panel" class="fields-panel" aria-label="Form fields panel">
+            <div class="panel-header">
+                <h2>Form Fields</h2>
+                <div class="header-actions">
+                    <span id="fields-count" class="badge" aria-label="Field count">0</span>
+                    <button id="help-button" class="icon-button" aria-label="Help" title="View help">
+                        <i class="material-icons">help_outline</i>
+                    </button>
+                    <button id="high-contrast-toggle" class="icon-button" aria-label="Toggle high contrast mode" title="Toggle high contrast">
+                        <i class="material-icons">contrast</i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="fields-list" class="fields-list" aria-label="List of form fields">
+                <!-- Fields will be populated here -->
+            </div>
+            
+            <div class="profile-section">
+                <div class="profile-header">
+                    <h3>Saved Profiles</h3>
+                    <button id="profile-add" class="icon-button" aria-label="Add profile" title="Add new profile">
+                        <i class="material-icons">person_add</i>
+                    </button>
+                </div>
+                <select id="profile-selector" aria-label="Select profile">
+                    <option value="">Select a profile</option>
+                    <option value="default">Default Profile</option>
+                </select>
+                <button id="autofill-profile" class="secondary-button">
+                    <i class="material-icons">auto_fix_high</i>
+                    <span>Auto-fill With Profile</span>
+                </button>
+            </div>
+            
+            <div class="helper-text">
+                <p>Click on any field to learn more or get help filling it out (Alt+F)</p>
+                <p>Press '?' for keyboard shortcuts</p>
+            </div>
+            
+            <div class="panel-actions">
+                <!-- Enhanced visibility buttons with !important flags -->
+                <button id="autofill-button" class="primary-button" aria-label="Auto-fill form" style="min-height:44px !important; border:2px solid black !important; background-color:#4285F4 !important; color:white !important; font-weight:bold !important; padding:10px !important; display:flex !important; align-items:center !important; justify-content:center !important;">
+                    <i class="material-icons">auto_fix_high</i>
+                    <span>Auto-fill Form</span>
+                </button>
+                <button id="upload-pdf-button" class="secondary-button" aria-label="Upload PDF" style="min-height:44px !important; border:2px solid #4285F4 !important; background-color:white !important; color:#4285F4 !important; font-weight:bold !important; padding:10px !important; display:flex !important; align-items:center !important; justify-content:center !important;">
+                    <i class="material-icons">upload_file</i>
+                    <span>Upload PDF</span>
+                </button>
+                
+                <!-- Fallback text-based command input in case buttons are not visible - hidden -->
+                <div id="fallback-commands" style="display:none !important;">
+                    <p style="font-size:12px; color:#666; margin-bottom:5px;"><strong>If buttons are not visible:</strong> Type command below</p>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="command-input" placeholder="Type 'autofill' or 'upload'" style="flex:1; padding:8px; border:1px solid #ccc; border-radius:4px;">
+                        <button id="command-button" style="background:#4285F4; color:white; border:none; border-radius:4px; padding:0 15px; font-weight:bold;">Go</button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="main">
-            <div id="status-message" class="status-message">
-                Scanning for forms...
-            </div>
-            
-            <!-- PDF Upload Section (shown when no form is detected) -->
-            <div id="upload-container" class="upload-container" style="display: none;">
-                <div class="upload-icon">📄</div>
-                <div class="upload-text">
-                    <p>No form detected on this page.</p>
-                    <p>Upload a PDF form to get help filling it out.</p>
+        
+        <!-- Toggle button -->
+        <div class="panel-toggle" id="panel-toggle" title="Toggle fields panel" aria-label="Toggle fields panel" tabindex="0" role="button" style="z-index:1000 !important; display:flex !important; visibility:visible !important;">
+            <i class="material-icons toggle-icon">chevron_left</i>
+        </div>
+        
+        <!-- Chat Panel -->
+        <div id="chat-panel" class="chat-panel" aria-label="Chat panel">
+            <div class="chat-header">
+                <div class="active-field-indicator" id="active-field-indicator">
+                    <i class="material-icons">arrow_right</i>
+                    <span id="active-field-name">No field selected</span>
                 </div>
-                <button id="upload-button" class="upload-button">Upload PDF Form</button>
-                <input type="file" id="pdf-upload" accept="application/pdf">
-            </div>
-            
-            <!-- Loading indicator -->
-            <div id="loader-container" class="loader-container" style="display: none;">
-                <div class="spinner"></div>
-                <p id="loader-text">Processing form...</p>
-            </div>
-            
-            <!-- Fields Section -->
-            <div id="fields-container" class="fields-container" style="display: none;">
-                <h3>Form Fields</h3>
-                <div id="fields-list" class="fields-list">
-                    <!-- Fields will be populated here -->
-                </div>
-                <div class="form-actions">
-                    <button id="autofill-button" class="action-button">Auto-fill Form</button>
-                    <button id="upload-pdf-button" class="action-button secondary">Upload PDF</button>
+                <div class="suggestion-chips" id="suggestion-chips">
+                    <button class="chip" data-value="What is this form for?">What is this form for?</button>
+                    <button class="chip" data-value="How do I fill this out?">How do I fill this out?</button>
+                    <button class="chip" data-value="Is this form secure?">Is this form secure?</button>
                 </div>
             </div>
             
-            <!-- Chat Section -->
-            <div id="chat-container" class="chat-container">
-                <!-- Initial welcome message -->
-                <div class="chat-message ai-message">
-                    <div class="message-text">Hello! I'm your form assistant. I can help you fill out forms and answer questions about form fields. If you have a PDF form, you can also upload it for analysis.</div>
+            <div id="chat-messages" class="chat-messages" aria-live="polite">
+                <!-- Welcome message -->
+                <div class="message ai-message">
+                    <div class="message-avatar">
+                        <i class="material-icons ai-icon">smart_toy</i>
+                    </div>
+                    <div class="message-container">
+                        <div class="message-content">
+                            Hello! I'm your form assistant. I can help you fill out forms and answer questions about form fields. If you have a PDF form, you can also upload it for analysis.
+                        </div>
+                        <div class="message-timestamp">Now</div>
+                    </div>
                 </div>
             </div>
             
-            <form id="chat-form" class="chat-form">
-                <input type="text" id="chat-input" placeholder="Ask about this form...">
-                <button type="submit" id="send-button">Send</button>
-            </form>
+            <div id="typing-indicator" class="typing-indicator" aria-live="polite">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+            
+            <div class="chat-input" style="display:flex !important; visibility:visible !important; z-index:9000 !important;">
+                <form id="chat-form" style="display:flex !important; width:100% !important;">
+                    <input type="text" id="chat-input-field" placeholder="Ask about this form..." aria-label="Type your message">
+                    <button type="submit" id="send-button" aria-label="Send message" style="display:flex !important; visibility:visible !important; min-width:40px !important; min-height:40px !important; z-index:9500 !important;">
+                        <i class="material-icons">send</i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Shortcuts Help Modal -->
+    <div id="shortcuts-modal" class="modal" aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-labelledby="shortcuts-title">
+            <div class="modal-header">
+                <h3 id="shortcuts-title">Keyboard Shortcuts</h3>
+                <button class="close-button" aria-label="Close shortcuts dialog">
+                    <i class="material-icons">close</i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="shortcut-row">
+                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>F</kbd></div>
+                    <div class="shortcut-description">Focus on fields panel</div>
+                </div>
+                <div class="shortcut-row">
+                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>C</kbd></div>
+                    <div class="shortcut-description">Focus on chat input</div>
+                </div>
+                <div class="shortcut-row">
+                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>A</kbd></div>
+                    <div class="shortcut-description">Auto-fill form</div>
+                </div>
+                <div class="shortcut-row">
+                    <div class="shortcut-key"><kbd>Alt</kbd> + <kbd>P</kbd></div>
+                    <div class="shortcut-description">Toggle fields panel</div>
+                </div>
+                <div class="shortcut-row">
+                    <div class="shortcut-key"><kbd>?</kbd></div>
+                    <div class="shortcut-description">Show this help dialog</div>
+                </div>
+                <div class="shortcut-row">
+                    <div class="shortcut-key"><kbd>Esc</kbd></div>
+                    <div class="shortcut-description">Close dialogs</div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Floating emergency fallback button - HIDDEN -->
+    <div id="emergency-button" style="
+        position: fixed !important;
+        bottom: 20px !important;
+        right: 20px !important;
+        z-index: 2147483647 !important;
+        width: 60px !important;
+        height: 60px !important;
+        background-color: #EA4335 !important;
+        color: white !important;
+        border-radius: 50% !important;
+        display: none !important; /* Hidden - no longer needed with side panel */
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+        font-size: 20px !important;
+        border: 3px solid white !important;
+    ">
+        <i class="material-icons">flash_on</i>
+    </div>
+    
+    <!-- Enhanced emergency fallback script with multiple methods -->
+    <script>
+        // Add keyboard shortcut Alt+A for auto-fill (global)
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey && e.key === 'a') {
+                console.log('Auto-fill keyboard shortcut used: Alt+A');
+                triggerAutofill();
+            }
+        });
+        
+        // Emergency fallback button
+        document.getElementById('emergency-button').addEventListener('click', function() {
+            console.log('Emergency button clicked');
+            alert('Emergency autofill triggered! This is a fallback in case regular buttons are not visible.');
+            triggerAutofill();
+        });
+        
+        // Centralized autofill trigger with multiple fallback methods
+        function triggerAutofill() {
+            console.log('Trying multiple autofill methods');
+            
+            // Method 1: Direct function call
+            if (typeof window.autoFillForm === 'function') {
+                console.log('Using window.autoFillForm()');
+                window.autoFillForm();
+                return;
+            }
+            
+            // Method 2: Try alternative casing
+            if (typeof window.autofillForm === 'function') {
+                console.log('Using window.autofillForm()');
+                window.autofillForm();
+                return;
+            }
+            
+            // Method 3: Click the button if it exists
+            const autofillButton = document.getElementById('autofill-button');
+            if (autofillButton) {
+                console.log('Clicking autofill-button');
+                autofillButton.click();
+                return;
+            }
+            
+            // Method 4: Message to content script
+            console.log('Sending message to content script');
+            try {
+                chrome.runtime.sendMessage({
+                    action: 'autoFillForm',
+                    formId: 'emergency',
+                    forceDetect: true
+                });
+            } catch (e) {
+                console.error('Chrome messaging failed:', e);
+                
+                // Method 5: Direct tabs messaging as absolute fallback
+                try {
+                    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+                        if (tabs[0]) {
+                            chrome.tabs.sendMessage(tabs[0].id, {
+                                action: 'autoFillForm',
+                                formId: 'any'
+                            });
+                        }
+                    });
+                } catch (e2) {
+                    console.error('All autofill methods failed:', e2);
+                    alert('Unable to trigger autofill. Please try another method or refresh the page.');
+                }
+            }
+        }
+        
+        // Command input fallback
+        document.addEventListener('DOMContentLoaded', function() {
+            const commandInput = document.getElementById('command-input');
+            const commandButton = document.getElementById('command-button');
+            
+            if (commandInput && commandButton) {
+                commandButton.addEventListener('click', processCommand);
+                commandInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        processCommand();
+                    }
+                });
+            }
+            
+            function processCommand() {
+                const command = commandInput.value.trim().toLowerCase();
+                console.log('Command entered:', command);
+                
+                if (command === 'autofill') {
+                    triggerAutofill();
+                } else if (command === 'upload') {
+                    const uploadButton = document.getElementById('upload-pdf-button');
+                    if (uploadButton) {
+                        uploadButton.click();
+                    }
+                } else if (command === 'help') {
+                    const helpButton = document.getElementById('help-button');
+                    if (helpButton) {
+                        helpButton.click();
+                    }
+                } else {
+                    // Send as chat message
+                    const chatInput = document.getElementById('chat-input-field');
+                    const chatForm = document.getElementById('chat-form');
+                    if (chatInput && chatForm) {
+                        chatInput.value = command;
+                        chatForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                    }
+                }
+                
+                // Clear the input
+                commandInput.value = '';
+            }
+        });
+        
+        // Fix layout and button visibility issues
+        window.addEventListener('load', function() {
+            console.log('Window loaded - applying button visibility fixes');
+            
+            // Force all buttons to be visible
+            document.querySelectorAll('button').forEach(button => {
+                // Skip if it's a close button or modal button
+                if (button.className.includes('close-button') || button.closest('.modal')) return;
+                
+                button.style.display = 'flex';
+                button.style.visibility = 'visible';
+                button.style.opacity = '1';
+                button.style.zIndex = '9999';
+            });
+            
+            // Make sure form containers are visible
+            document.querySelectorAll('form, .panel-actions, .chat-input').forEach(el => {
+                el.style.display = 'flex';
+                el.style.visibility = 'visible';
+                el.style.opacity = '1';
+                el.style.zIndex = '9000';
+            });
+            
+            console.log('Button visibility fixes applied');
+        });
+    </script>
+    
+    <!-- Fix-layout script to ensure proper layout -->
+    <script src="fix-layout.js"></script>
+    
+    <!-- Button visibility fix script -->
+    <script src="button-visibility-fix.js"></script>
+    
+    <!-- Main panel script -->
     <script src="panel.js"></script>
 </body>
 </html>

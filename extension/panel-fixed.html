@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Form Helper</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        /* Base styles */
+        :root {
+            --primary: #4285F4;
+            --primary-dark: #3367D6;
+            --primary-hover: #d7e3fa;
+            --secondary: #5F6368;
+            --text-primary: #202124;
+            --text-secondary: #5F6368;
+            --text-hint: #9AA0A6;
+            --border: #E1E3E6;
+            --background: #FFFFFF;
+            --background-light: #F8F9FA;
+            --required: #EA4335;
+            --optional: #9AA0A6;
+            --focus: rgba(66, 133, 244, 0.1);
+            --shadow: 0 1px 3px rgba(0,0,0,0.12);
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --spacing-xl: 24px;
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-pill: 16px;
+            --transition: 0.2s ease;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: var(--text-primary);
+            background-color: var(--background);
+            font-size: 14px;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Header styles */
+        .header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--background);
+        }
+        
+        .title {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #34A853; /* Active green */
+            display: inline-block;
+            margin-left: var(--spacing-sm);
+        }
+        
+        /* Main container */
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Fields section */
+        .fields-container {
+            padding: var(--spacing-md) var(--spacing-lg) var(--spacing-sm);
+            border-bottom: 1px solid var(--border);
+            background-color: var(--background-light);
+        }
+        
+        .fields-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .fields-header h2 {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .field-count {
+            font-weight: normal;
+            color: var(--text-secondary);
+        }
+        
+        .loading-indicator {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--background-light);
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: var(--spacing-sm);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .field-pill {
+            display: flex;
+            align-items: center;
+            padding: var(--spacing-sm) var(--spacing-md);
+            background-color: var(--background);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-pill);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition);
+            height: 36px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        .field-pill:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary);
+        }
+        
+        .field-pill.required {
+            border-color: var(--required);
+        }
+        
+        .field-pill.optional {
+            border-color: var(--optional);
+        }
+        
+        .retry-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .retry-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .field-icon {
+            font-size: 16px;
+            margin-right: var(--spacing-sm);
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+        
+        .field-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .helper-text {
+            text-align: center;
+            color: var(--text-hint);
+            font-size: 12px;
+            margin-top: var(--spacing-xs);
+            padding: var(--spacing-xs) 0;
+        }
+        
+        /* Chat section */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            background-color: var(--background);
+        }
+        
+        .messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+            padding-bottom: var(--spacing-sm);
+        }
+        
+        .message {
+            display: flex;
+            max-width: 85%;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+        }
+        
+        .message-bubble {
+            background-color: var(--background-light);
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-radius: var(--radius-md);
+            position: relative;
+        }
+        
+        .user-message .message-bubble {
+            background-color: var(--primary);
+            color: white;
+            border-radius: var(--radius-md);
+        }
+        
+        /* Input section */
+        .input-container {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-top: 1px solid var(--border);
+            background-color: var(--background);
+            display: flex;
+            align-items: center;
+        }
+        
+        .autofill-button {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: background-color var(--transition);
+            flex-shrink: 0;
+            margin-right: var(--spacing-md);
+            height: 36px;
+        }
+        
+        .autofill-button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .input-form {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            width: 100%;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color var(--transition);
+            height: 36px;
+        }
+        
+        .input-field:focus {
+            border-color: var(--primary);
+        }
+        
+        .send-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color var(--transition);
+            flex-shrink: 0;
+        }
+        
+        .send-button:hover {
+            background-color: var(--primary-dark);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <h1 class="title">
+            <i class="material-icons" style="font-size: 18px;">smart_toy</i>
+            AI Form Helper
+            <span class="status" title="Connected to form"></span>
+        </h1>
+    </header>
+    
+    <!-- Main container -->
+    <div class="container">
+        <!-- Fields section -->
+        <div class="fields-container" id="fields-container">
+            <div class="fields-header">
+                <h2>
+                    Form Fields
+                    <span id="field-count" class="field-count">(0)</span>
+                    <span id="loading-indicator" class="loading-indicator"></span>
+                </h2>
+            </div>
+            <div class="field-grid" id="field-grid">
+                <!-- Fields will be dynamically populated here -->
+            </div>
+            <div class="helper-text" id="helper-text">
+                Click any field for an explanation
+            </div>
+            <div id="error-message" class="helper-text" style="display: none; color: #EA4335; margin-top: 8px;">
+                Failed to detect form fields. <button id="retry-detection" class="retry-button">Retry Detection</button>
+            </div>
+        </div>
+        
+        <!-- Chat section -->
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <!-- Initial welcome message -->
+                <div class="message ai-message">
+                    <div class="message-bubble">
+                        Analyzing form fields on this page...
+                    </div>
+                </div>
+                <!-- Messages will be dynamically added here -->
+            </div>
+        </div>
+        
+        <!-- Input section with integrated auto-fill button -->
+        <div class="input-container">
+            <button class="autofill-button" id="autofill-button">
+                <i class="material-icons" style="font-size: 16px;">auto_fix_high</i>
+                Auto-fill
+            </button>
+            
+            <form class="input-form" id="chat-form">
+                <input type="text" class="input-field" id="chat-input" placeholder="Ask about this form..." aria-label="Type your message">
+                <button type="submit" class="send-button" id="send-button">
+                    <i class="material-icons">send</i>
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Load scripts with defer attribute for better performance -->
+    <script src="field-detector.js" defer></script>
+    <script src="panel-fixed-main.js" defer></script>
+    
+    <!-- Debug integration -->
+    <script src="panel-debug-integration.js"></script>
+    
+    <!-- Emergency script for debugging -->
+    <script>
+        // Create global debug helpers
+        window.forceShowDebugPanel = function() {
+            console.log('EMERGENCY: Forcing debug panel visibility');
+            if (window.PanelDebugIntegration && window.PanelDebugIntegration.toggleDebugMode) {
+                window.PanelDebugIntegration.toggleDebugMode(true);
+            } else {
+                alert('PanelDebugIntegration not loaded yet! Check console for errors.');
+            }
+        };
+        
+        // Add panel visibility button after 3 seconds as a fallback
+        setTimeout(function() {
+            const emergencyButton = document.createElement('button');
+            emergencyButton.textContent = '🐞 SHOW DEBUG';
+            emergencyButton.style.cssText = `
+                position: fixed;
+                bottom: 50px;
+                right: 10px;
+                background: red;
+                color: white;
+                border: none;
+                padding: 10px;
+                z-index: 99999;
+                font-weight: bold;
+                cursor: pointer;
+            `;
+            emergencyButton.onclick = function() {
+                window.forceShowDebugPanel();
+            };
+            document.body.appendChild(emergencyButton);
+            console.log('EMERGENCY: Added fallback debug button to page');
+        }, 3000);
+    </script>
+</body>
+</html>

@@ -1,1668 +1,1075 @@
-// AI Form Helper panel.js - Enhanced with PDF processing and backend integration
+// AI Form Helper panel.js - Enhanced UI version
 
+// Ensure the DOM is fully loaded before initializing
 document.addEventListener('DOMContentLoaded', function() {
-    // API Configuration - override with localhost for development, set to production URL for release
+    console.log("Panel.js: DOMContentLoaded triggered");
+    
+    // Debug button visibility
+    console.log("Checking buttons in DOM:");
+    const allButtons = document.querySelectorAll('button');
+    console.log(`Found ${allButtons.length} button elements:`, allButtons);
+    
+    // Look for specific buttons
+    const sendBtn = document.getElementById('send-button');
+    const autofillBtn = document.getElementById('autofill-button');
+    const autofillProfileBtn = document.getElementById('autofill-profile');
+    const uploadPdfBtn = document.getElementById('upload-pdf-button');
+    const helpBtn = document.getElementById('help-button');
+    
+    console.log("Button visibility check:", {
+        "send-button": sendBtn ? "Found" : "Missing",
+        "autofill-button": autofillBtn ? "Found" : "Missing",
+        "autofill-profile": autofillProfileBtn ? "Found" : "Missing",
+        "upload-pdf-button": uploadPdfBtn ? "Found" : "Missing",
+        "help-button": helpBtn ? "Found" : "Missing"
+    });
+    
+    // API Configuration
     const API_CONFIG = {
         BASE_URL: 'http://localhost:8000',
         ENDPOINTS: {
-            FORMS_DEBUG: '/api/test',           // Changed from /api/forms/debug
-            AI_DEBUG: '/api/test',              // Changed from /api/ai/ask
-            PROCESS_FORM: '/api/process-form',  // Changed from /api/forms/process-form
-            PROCESS_FORM_UPLOAD: '/api/process-form-upload', // Changed from /api/forms/process-form-upload
-            ASK: '/api/ask',                    // Changed from /api/ai/ask
-            SMART_ASK: '/api/smart/ask',        // New enhanced SmartCopilot endpoint
+            PROCESS_FORM: '/api/process-form',
+            ASK: '/api/ask',
             PROFILE_GET: '/api/profiles/',
-            PROFILE_CREATE: '/api/profiles',
-            PROFILE_UPDATE: '/api/profiles/'
+            PROFILE_CREATE: '/api/profiles/create',
+            PROFILE_UPDATE: '/api/profiles/update'
         }
     };
-
-    // Field knowledge base - comprehensive explanations for all common field types
-    // Used as fallback when server isn't available
-    const FIELD_KNOWLEDGE = {
-      "email": {
-        purpose: "An email address is used for account creation, login, and communications from the service.",
-        format: "username@domain.com",
-        examples: "john.doe@example.com, jane_smith123@company.co.uk",
-        required: "Email addresses are usually required as they're the primary means of communication and account recovery.",
-        privacy: "Your email may be used to send you updates and notifications. Check the privacy policy for how it will be used.",
-        security: "Use a secure email provider with good spam filtering."
-      },
-      "password": {
-        purpose: "A password protects your account from unauthorized access.",
-        format: "Usually 8+ characters with a mix of letters, numbers, and symbols.",
-        examples: "(Examples aren't shown for security reasons)",
-        required: "Yes, password fields are always required for security purposes.",
-        privacy: "Never share your password with anyone. Legitimate services will never ask for it.",
-        security: "Create a unique password not used on other sites. Consider using a password manager.",
-        login_context: "This field is for entering your existing password to access your account.",
-        registration_context: "This field is for creating a secure password that will protect your new account.",
-        strength_guidance: "A strong password should include uppercase and lowercase letters, numbers, and special characters. Avoid using personal information or common words."
-      },
-      "name": {
-        purpose: "Your name is used for personalization and identification.",
-        format: "Text, as it appears on your official documents.",
-        examples: "John Smith, Jane Doe",
-        required: "Names are typically required for personalization and identification.",
-        privacy: "Your name may appear in your profile or account information.",
-        security: "Use your legal name for official forms."
-      },
-      "first_name": {
-        purpose: "Your first or given name for personalization and identification.",
-        format: "Text, as it appears on your official documents.",
-        examples: "John, Jane, Robert",
-        required: "First names are typically required for personalization.",
-        privacy: "Your first name may appear in your profile or communications.",
-        security: "Use your legal first name for official forms."
-      },
-      "last_name": {
-        purpose: "Your family name or surname for identification.",
-        format: "Text, as it appears on your official documents.",
-        examples: "Smith, Johnson, Williams",
-        required: "Last names are typically required for identification.",
-        privacy: "Your last name may appear in your profile or account information.",
-        security: "Use your legal last name for official forms."
-      },
-      "phone": {
-        purpose: "A contact number for verification, account recovery, or communication.",
-        format: "Varies by country. In the US, typically (XXX) XXX-XXXX or XXX-XXX-XXXX.",
-        examples: "555-123-4567, (555) 123-4567",
-        required: "Phone numbers may be required for verification or security purposes.",
-        privacy: "Your phone number may be used for account recovery or two-factor authentication.",
-        security: "Use a reliable phone number you have regular access to."
-      },
-      "address": {
-        purpose: "Your physical location for shipping, billing, or identification.",
-        format: "Street number and name, often with apartment/unit number if applicable.",
-        examples: "123 Main St, 456 Oak Ave Apt 7B",
-        required: "Addresses are required for shipping, billing, or geographic verification.",
-        privacy: "Your address may be used for location-based services or shipping.",
-        security: "Ensure your address is current and accurate."
-      },
-      "city": {
-        purpose: "The city component of your address.",
-        format: "Text name of your city or town.",
-        examples: "New York, San Francisco, Chicago",
-        required: "City is typically required when an address is needed.",
-        privacy: "Your city may be used for location-based services.",
-        security: "Enter your city as it officially appears on mail or IDs."
-      },
-      "state": {
-        purpose: "The state or province component of your address.",
-        format: "In the US, typically a two-letter abbreviation.",
-        examples: "CA, NY, TX, FL",
-        required: "State is typically required when an address is needed.",
-        privacy: "Your state may be used for location-based services or tax purposes.",
-        security: "Use the standard abbreviation when applicable."
-      },
-      "zip": {
-        purpose: "Postal code for mail delivery and location identification.",
-        format: "In the US, a 5-digit code or 9-digit extended code (ZIP+4).",
-        examples: "10001, 94107-2282",
-        required: "ZIP codes are typically required for shipping and geographic verification.",
-        privacy: "Your ZIP code may be used for location-based services.",
-        security: "Ensure your ZIP code matches your address."
-      },
-      "country": {
-        purpose: "The country component of your address.",
-        format: "Full country name or standard country code.",
-        examples: "United States, Canada, UK, Australia",
-        required: "Country is typically required for international forms.",
-        privacy: "Your country may be used for localization and geographic services.",
-        security: "Select the country where you currently reside or hold citizenship."
-      },
-      "date_of_birth": {
-        purpose: "Your birth date for age verification, identity confirmation, or personalization.",
-        format: "Usually MM/DD/YYYY in the US or DD/MM/YYYY in many other countries.",
-        examples: "01/15/1985, 15/01/1985",
-        required: "Date of birth is often required for age verification or identity confirmation.",
-        privacy: "Your birth date is sensitive personal information used for identity verification.",
-        security: "Ensure the format matches what the form requires (MM/DD/YYYY vs DD/MM/YYYY)."
-      },
-      "username": {
-        purpose: "A unique identifier you use to log into an account.",
-        format: "Often alphanumeric, may allow special characters like underscores.",
-        examples: "jsmith42, jane_doe, robert.williams",
-        required: "Usernames are required for logging into your account.",
-        privacy: "Your username may be visible to other users depending on the service.",
-        security: "Choose something memorable but not too personally identifying."
-      },
-      "search": {
-        purpose: "Enter keywords to find specific information.",
-        format: "Free text input, supporting keywords and sometimes special operators.",
-        examples: "coffee shops near me, javascript tutorials",
-        required: "Search fields are optional but help you find specific content.",
-        privacy: "Your search queries may be stored to improve search results.",
-        security: "Avoid entering sensitive personal information in search fields."
-      },
-      "checkbox": {
-        purpose: "Allows selecting or deselecting a specific option.",
-        format: "Click to toggle between selected (checked) and not selected (unchecked).",
-        examples: "Agree to terms, Subscribe to newsletter",
-        required: "Some checkboxes may be required, especially for agreeing to terms.",
-        privacy: "Check what you're agreeing to before selecting required checkboxes.",
-        security: "Read associated text carefully before checking boxes."
-      },
-      "radio": {
-        purpose: "Select a single option from a group of choices.",
-        format: "Click to select. Only one option in a group can be selected at a time.",
-        examples: "Gender selection, payment method choice",
-        required: "Radio button groups are often required when a selection is necessary.",
-        privacy: "Your selection indicates a preference that may be stored in your profile.",
-        security: "Make sure you understand what each option means before selecting."
-      },
-      "textarea": {
-        purpose: "Enter longer text responses or comments.",
-        format: "Multi-line text field that can contain paragraphs and line breaks.",
-        examples: "Comments, feedback, message content",
-        required: "Text areas may be optional or required depending on the form.",
-        privacy: "Be mindful of what personal information you share in comments.",
-        security: "Avoid sharing sensitive information in public comments."
-      },
-      "college": {
-        purpose: "This field is where you enter your college or university name.",
-        format: "Enter the full official name of your college or university.",
-        examples: "University of Phoenix, Harvard University, Stanford University",
-        required: "College name is typically required for educational applications.",
-        privacy: "Your educational information may be used for verification or eligibility.",
-        security: "Use the official name as it appears on transcripts or diplomas."
-      }
+    
+    // Field type to icon mapping
+    const FIELD_ICONS = {
+        'text': 'text_fields',
+        'email': 'email',
+        'password': 'password',
+        'tel': 'phone',
+        'number': 'pin',
+        'date': 'calendar_today',
+        'select': 'arrow_drop_down_circle',
+        'checkbox': 'check_box',
+        'radio': 'radio_button_checked',
+        'file': 'attach_file',
+        'textarea': 'subject',
+        'url': 'link',
+        'search': 'search',
+        'time': 'access_time',
+        'color': 'palette',
+        'range': 'tune',
+        'default': 'input'
     };
-  
-    // Add field-specific knowledge that might not match standard types
-    const SPECIFIC_FIELDS = {
-      "email": FIELD_KNOWLEDGE.email,
-      "mail": FIELD_KNOWLEDGE.email,
-      "e-mail": FIELD_KNOWLEDGE.email,
-      "emailaddress": FIELD_KNOWLEDGE.email,
-      "password": FIELD_KNOWLEDGE.password,
-      "pass": FIELD_KNOWLEDGE.password,
-      "pwd": FIELD_KNOWLEDGE.password,
-      "first_name": FIELD_KNOWLEDGE.first_name,
-      "firstname": FIELD_KNOWLEDGE.first_name,
-      "fname": FIELD_KNOWLEDGE.first_name,
-      "last_name": FIELD_KNOWLEDGE.last_name,
-      "lastname": FIELD_KNOWLEDGE.last_name,
-      "lname": FIELD_KNOWLEDGE.last_name,
-      "name": FIELD_KNOWLEDGE.name,
-      "fullname": FIELD_KNOWLEDGE.name,
-      "full_name": FIELD_KNOWLEDGE.name,
-      "phone": FIELD_KNOWLEDGE.phone,
-      "telephone": FIELD_KNOWLEDGE.phone,
-      "tel": FIELD_KNOWLEDGE.phone,
-      "mobile": FIELD_KNOWLEDGE.phone,
-      "phone_number": FIELD_KNOWLEDGE.phone,
-      "address": FIELD_KNOWLEDGE.address,
-      "street": FIELD_KNOWLEDGE.address,
-      "address1": FIELD_KNOWLEDGE.address,
-      "address_line_1": FIELD_KNOWLEDGE.address,
-      "city": FIELD_KNOWLEDGE.city,
-      "town": FIELD_KNOWLEDGE.city,
-      "state": FIELD_KNOWLEDGE.state,
-      "province": FIELD_KNOWLEDGE.state,
-      "region": FIELD_KNOWLEDGE.state,
-      "zip": FIELD_KNOWLEDGE.zip,
-      "zipcode": FIELD_KNOWLEDGE.zip,
-      "postalcode": FIELD_KNOWLEDGE.zip,
-      "postal": FIELD_KNOWLEDGE.zip,
-      "country": FIELD_KNOWLEDGE.country,
-      "nation": FIELD_KNOWLEDGE.country,
-      "dob": FIELD_KNOWLEDGE.date_of_birth,
-      "birth_date": FIELD_KNOWLEDGE.date_of_birth,
-      "birthdate": FIELD_KNOWLEDGE.date_of_birth,
-      "date_of_birth": FIELD_KNOWLEDGE.date_of_birth,
-      "birthday": FIELD_KNOWLEDGE.date_of_birth,
-      "user": FIELD_KNOWLEDGE.username,
-      "username": FIELD_KNOWLEDGE.username,
-      "userid": FIELD_KNOWLEDGE.username,
-      "login": FIELD_KNOWLEDGE.username,
-      "search": FIELD_KNOWLEDGE.search,
-      "query": FIELD_KNOWLEDGE.search,
-      "find": FIELD_KNOWLEDGE.search,
-      "checkbox": FIELD_KNOWLEDGE.checkbox,
-      "check": FIELD_KNOWLEDGE.checkbox,
-      "radio": FIELD_KNOWLEDGE.radio,
-      "option": FIELD_KNOWLEDGE.radio,
-      "textarea": FIELD_KNOWLEDGE.textarea,
-      "comment": FIELD_KNOWLEDGE.textarea,
-      "message": FIELD_KNOWLEDGE.textarea,
-      "college": FIELD_KNOWLEDGE.college,
-      "university": FIELD_KNOWLEDGE.college,
-      "school": FIELD_KNOWLEDGE.college
+    
+    // Common validation patterns
+    const VALIDATION_PATTERNS = {
+        'email': [
+            { 
+                pattern: 'Must contain @ symbol',
+                example: 'example@domain.com'
+            }
+        ],
+        'password': [
+            {
+                pattern: 'At least 8 characters',
+                example: 'Use a strong password with mixed characters'
+            }
+        ],
+        'tel': [
+            {
+                pattern: 'Numbers only',
+                example: '1234567890'
+            }
+        ]
     };
-  
-    // Common questions and answers about forms
-    const COMMON_QUESTIONS = {
-      "what is this form for": "This appears to be a college application form where you'll enter your personal information to create an account or log in to an existing one.",
-      "how long will this take": "This form should take about 5-10 minutes to complete, depending on how familiar you are with the requested information.",
-      "is this secure": "This form is on a secure connection (https). Always make sure you're on the official website before entering personal information.",
-      "what happens next": "After completing this form, you'll likely move to the next steps in the application process, such as providing educational history or selecting programs of interest.",
-      "can i save and continue later": "Many application forms allow you to save your progress and continue later. Look for a 'Save' button or automatic saving indicators."
-    };
-  
-    // Initialize variables
-    let currentFormId = null;
-    let detectedFields = [];
-    let currentFieldContext = null;
-    let serverConnected = false;
-    let isProcessingPdf = false;
-    let userProfile = null;
-  
-    // DOM Elements
-    const statusMessage = document.getElementById('status-message');
-    const fieldsContainer = document.getElementById('fields-container');
-    const chatContainer = document.getElementById('chat-container');
+    
+    // UI Elements
+    const container = document.querySelector('.container');
+    const fieldsPanel = document.getElementById('fields-panel');
+    const fieldsList = document.getElementById('fields-list');
+    const fieldsCount = document.getElementById('fields-count');
+    const chatMessages = document.getElementById('chat-messages');
     const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const uploadContainer = document.querySelector('.upload-container') || createUploadContainer();
-    const loaderContainer = document.createElement('div');
-    loaderContainer.className = 'loader-container';
-    loaderContainer.style.display = 'none';
-    loaderContainer.innerHTML = `
-      <div class="spinner"></div>
-      <p id="loader-text">Processing form...</p>
-    `;
+    const chatInputField = document.getElementById('chat-input-field');
+    const sendButton = document.getElementById('send-button');
+    const autofillButton = document.getElementById('autofill-button');
+    const autofillProfileButton = document.getElementById('autofill-profile');
+    const uploadPdfButton = document.getElementById('upload-pdf-button');
+    const panelToggle = document.getElementById('panel-toggle');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const activeFieldIndicator = document.getElementById('active-field-indicator');
+    const activeFieldName = document.getElementById('active-field-name');
+    const suggestionChips = document.getElementById('suggestion-chips');
+    const helpButton = document.getElementById('help-button');
+    const shortcutsModal = document.getElementById('shortcuts-modal');
+    const closeModalButton = document.querySelector('.close-button');
+    const highContrastToggle = document.getElementById('high-contrast-toggle');
+    const profileAddButton = document.getElementById('profile-add');
+    const profileSelector = document.getElementById('profile-selector');
     
-    // Add loader container to DOM if not already present
-    if (!document.querySelector('.loader-container')) {
-      const main = document.querySelector('.main');
-      if (main) {
-        main.insertBefore(loaderContainer, chatContainer);
-      }
-    }
-
-    // Create fixed action buttons container (NEW)
-    const formActionsDiv = document.createElement('div');
-    formActionsDiv.className = 'form-actions-fixed';
-    formActionsDiv.style.cssText = `
-      padding: 10px;
-      background-color: white;
-      border-top: 1px solid #ddd;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      justify-content: space-between;
-      z-index: 100;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      width: 100%;
-    `;
+    // State variables
+    let currentFormData = null;
+    let formFields = [];
+    let lastSystemMessage = null;
+    let currentFieldIndex = null;
+    let isTyping = false;
+    let profiles = {
+        'default': {
+            name: 'Default Profile',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@example.com',
+            phone: '1234567890',
+            address: '123 Main St',
+            city: 'Anytown',
+            state: 'CA',
+            zip: '12345'
+        }
+    };
     
-    // Add auto-fill button (NEW)
-    const autoFillButton = document.createElement('button');
-    autoFillButton.id = 'autofill-button';
-    autoFillButton.className = 'action-button';
-    autoFillButton.style.cssText = `
-      flex: 1;
-      margin-right: 5px;
-      padding: 10px;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    `;
-    autoFillButton.textContent = 'Auto-fill All Fields';
-    autoFillButton.addEventListener('click', autoFillAllFields);
-    formActionsDiv.appendChild(autoFillButton);
-    
-    // Add upload PDF button (NEW)
-    const uploadPdfFixedButton = document.createElement('button');
-    uploadPdfFixedButton.id = 'upload-pdf-fixed-button';
-    uploadPdfFixedButton.className = 'action-button secondary';
-    uploadPdfFixedButton.style.cssText = `
-      flex: 1;
-      margin-left: 5px;
-      padding: 10px;
-      background-color: #f1f1f1;
-      color: #333;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      cursor: pointer;
-    `;
-    uploadPdfFixedButton.textContent = 'Upload PDF';
-    uploadPdfFixedButton.addEventListener('click', triggerPdfUpload);
-    formActionsDiv.appendChild(uploadPdfFixedButton);
-    
-    // Insert the fixed action buttons after the status message and before the fields container (NEW)
-    const main = document.querySelector('.main');
-    if (main && fieldsContainer) {
-      main.insertBefore(formActionsDiv, fieldsContainer);
-    } else if (document.body) {
-      document.body.insertBefore(formActionsDiv, document.body.firstChild);
-    }
-  
-    // Create upload container if it doesn't exist
-    function createUploadContainer() {
-      const container = document.createElement('div');
-      container.className = 'upload-container';
-      container.style.display = 'none';
-      container.innerHTML = `
-        <div class="upload-icon">📄</div>
-        <div class="upload-text">
-          <p>No form detected on this page.</p>
-          <p>Upload a PDF form to get help filling it out.</p>
-        </div>
-        <button id="upload-button" class="upload-button">Upload PDF Form</button>
-        <input type="file" id="pdf-upload" accept="application/pdf" style="display: none;">
-      `;
-      
-      // Add to DOM
-      const main = document.querySelector('.main');
-      if (main) {
-        main.insertBefore(container, chatContainer);
-      }
-      
-      return container;
-    }
-  
-    // Add PDF Upload elements if not already in HTML
-    const pdfUpload = document.getElementById('pdf-upload') || createPdfUploadInput();
-    const uploadButton = document.getElementById('upload-button') || createUploadButton();
-    
-    function createPdfUploadInput() {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.id = 'pdf-upload';
-      input.accept = 'application/pdf';
-      input.style.display = 'none';
-      document.body.appendChild(input);
-      return input;
-    }
-    
-    function createUploadButton() {
-      const button = document.createElement('button');
-      button.id = 'upload-button';
-      button.className = 'upload-button';
-      button.textContent = 'Upload PDF Form';
-      
-      // If we have an upload container, add it there
-      const container = document.querySelector('.upload-container');
-      if (container) {
-        container.appendChild(button);
-      } else {
-        document.body.appendChild(button);
-      }
-      
-      return button;
-    }
-  
-    // Profile management functions
-    // Get or create user profile using Chrome storage
-    async function getOrCreateProfile() {
-        return new Promise((resolve) => {
-            // Try to get the browser ID from localStorage first
-            let userId = localStorage.getItem('formHelperUserId');
-            if (!userId) {
-                // Generate a unique ID if none exists
-                userId = 'user_' + Date.now();
-                localStorage.setItem('formHelperUserId', userId);
+    // Initialize panel by scanning for forms
+    function initPanel() {
+        // Add event listeners
+        setupEventListeners();
+        
+        // Initialize markdown renderer
+        initializeMarkdown();
+        
+        // Load user preferences
+        loadPreferences();
+        
+        // Request form scan from content script
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {action: 'scanForms'}, function(response) {
+                    console.log('Scan forms response:', response);
+                });
             }
-            
-            // Try to get the profile from Chrome storage
-            chrome.storage.sync.get(['userProfile'], function(result) {
-                if (result.userProfile && result.userProfile.user_id === userId) {
-                    console.log('Profile loaded from Chrome storage:', result.userProfile);
-                    resolve(result.userProfile);
-                } else {
-                    // Create a new profile if not found
-                    const newProfile = {
-                        user_id: userId,
-                        display_name: 'User',
-                        field_values: {},
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    };
-                    
-                    // Save to Chrome storage
-                    chrome.storage.sync.set({ userProfile: newProfile }, function() {
-                        console.log('Created new profile in Chrome storage:', newProfile);
-                        resolve(newProfile);
-                    });
-                }
-            });
         });
     }
-
-    // Save field value to profile in Chrome storage
-    async function saveFieldToProfile(fieldName, fieldValue) {
-        if (!userProfile || !userProfile.user_id) {
-            console.error('Cannot save field: profile not loaded');
-            return;
-        }
-        
-        try {
-            // Update the field value in memory
-            if (!userProfile.field_values) {
-                userProfile.field_values = {};
-            }
-            
-            userProfile.field_values[fieldName] = fieldValue;
-            userProfile.updated_at = new Date().toISOString();
-            
-            // Save the updated profile to Chrome storage
-            chrome.storage.sync.set({ userProfile: userProfile }, function() {
-                console.log(`Saved ${fieldName} to profile in Chrome storage`);
+    
+    // Initialize markdown renderer
+    function initializeMarkdown() {
+        if (typeof marked !== 'undefined') {
+            // Configure marked options
+            marked.setOptions({
+                breaks: true,
+                gfm: true
             });
-        } catch (error) {
-            console.error('Error saving field to profile:', error);
+        } else {
+            console.warn('Marked library not loaded');
         }
-    }
-
-    // Set initial status
-    updateStatus('Scanning for forms...');
-
-    // Combined initialization function
-    async function initializeApp() {
-        // Check server connection
-        serverConnected = await checkServerConnection();
-        
-        // Get or create user profile (regardless of server connection status)
-        try {
-            userProfile = await getOrCreateProfile();
-            console.log('User profile loaded:', userProfile);
-            
-            // Update UI to show profile is loaded
-            if (userProfile && userProfile.display_name && statusText) {
-                const connectionStatus = serverConnected ? 'Server Connected' : 'Server Disconnected';
-                statusText.textContent = `${connectionStatus} | Profile: ${userProfile.display_name}`;
-            }
-        } catch (error) {
-            console.error('Error loading profile:', error);
-            // Create a default in-memory profile if loading fails
-            userProfile = {
-                user_id: 'default_user_' + Date.now(),
-                display_name: 'User',
-                field_values: {},
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            };
-        }
-        
-        // Request form scan
-        requestFormScan();
-    }
-
-    // Call the initialization function
-    initializeApp();
-
-    // Set up event listeners
-    setupListeners();
-      
-    // Update status message
-    function updateStatus(message) {
-      if (statusMessage) {
-        statusMessage.textContent = message;
-        statusMessage.style.display = 'block';
-      } else {
-        console.log('Status:', message);
-      }
     }
     
-    // Check if backend server is available
-    async function checkServerConnection() {
-      try {
-        // Check forms API
-        const formsResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FORMS_DEBUG}`);
-        
-        // Check AI API
-        const aiResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_DEBUG}`);
-        
-        // Both need to be available
-        serverConnected = formsResponse.ok && aiResponse.ok;
-        
-        // Update UI
-        if (statusDot && statusText) {
-          if (serverConnected) {
-            statusDot.classList.remove('disconnected');
-            statusDot.classList.add('connected');
-            statusText.textContent = 'Server Connected';
-            console.log('Server connection established');
-          } else {
-            statusDot.classList.remove('connected');
-            statusDot.classList.add('disconnected');
-            statusText.textContent = 'Server Disconnected';
-            console.log('Server connection failed');
-          }
-        }
-      } catch (error) {
-        console.error('Error checking server connection:', error);
-        serverConnected = false;
-        
-        // Update UI
-        if (statusDot && statusText) {
-          statusDot.classList.remove('connected');
-          statusDot.classList.add('disconnected');
-          statusText.textContent = 'Server Disconnected';
-        }
-      }
-      
-      return serverConnected;
-    }
-  
-    // Request form scan from content script
-    function requestFormScan() {
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        if (!tabs[0]) {
-          updateStatus('No active tab found');
-          showUploadContainer();
-          return;
-        }
-        
-        chrome.tabs.sendMessage(tabs[0].id, {action: 'scanForms'}, function(response) {
-          if (chrome.runtime.lastError) {
-            console.error('Error sending message:', chrome.runtime.lastError);
-            updateStatus('Could not communicate with the page. Try uploading a PDF instead.');
-            showUploadContainer();
-            return;
-          }
+    // Load user preferences from storage
+    function loadPreferences() {
+        chrome.storage.sync.get(['highContrast', 'profiles'], function(result) {
+            // Set high contrast if enabled
+            if (result.highContrast) {
+                document.body.classList.add('high-contrast');
+            }
+            
+            // Load saved profiles
+            if (result.profiles) {
+                profiles = result.profiles;
+                updateProfileSelector();
+            }
         });
-      });
+    }
+    
+    // Save user preferences to storage
+    function savePreferences() {
+        chrome.storage.sync.set({
+            highContrast: document.body.classList.contains('high-contrast'),
+            profiles: profiles
+        });
     }
     
     // Set up all event listeners
-    function setupListeners() {
-      // Remove existing listeners first
-      chrome.runtime.onMessage.removeListener(handleMessage);
-      
-      // Add message listener for content script
-      chrome.runtime.onMessage.addListener(handleMessage);
-      
-      // Chat form submission
-      if (chatForm) {
-        chatForm.removeEventListener('submit', handleChatSubmit);
-        chatForm.addEventListener('submit', handleChatSubmit);
-      }
-      
-      // PDF upload - connect both buttons to the same function
-      if (uploadButton) {
-        uploadButton.removeEventListener('click', triggerPdfUpload);
-        uploadButton.addEventListener('click', triggerPdfUpload);
-      }
-      
-      if (uploadPdfFixedButton) {
-        uploadPdfFixedButton.removeEventListener('click', triggerPdfUpload);
-        uploadPdfFixedButton.addEventListener('click', triggerPdfUpload);
-      }
-      
-      if (pdfUpload) {
-        pdfUpload.removeEventListener('change', handlePdfUpload);
-        pdfUpload.addEventListener('change', handlePdfUpload);
-      }
-    }
-    
-    // Trigger PDF upload dialog
-    function triggerPdfUpload() {
-      if (pdfUpload) {
-        pdfUpload.click();
-      }
-    }
-    
-    // Handle PDF file upload
-    async function handlePdfUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      if (file.type !== 'application/pdf') {
-        addChatMessage('ai', 'Please upload a PDF file. Other file types are not supported.');
-        return;
-      }
-      
-      // Show loading spinner
-      showLoader('Processing PDF form...');
-      
-      // Set flag
-      isProcessingPdf = true;
-      
-      if (serverConnected) {
-        try {
-          await processPdfWithServer(file);
-        } catch (error) {
-          console.error('Error processing PDF with server:', error);
-          addChatMessage('ai', 'There was an error processing the PDF. Please try again or use a different file.');
-          hideLoader();
-          isProcessingPdf = false;
-        }
-      } else {
-        // Fallback to local processing (very limited)
-        addChatMessage('ai', 'Server connection is not available. PDF processing requires server connection for OCR capabilities.');
-        hideLoader();
-        isProcessingPdf = false;
-      }
-    }
-    
-    // Process PDF with server
-    async function processPdfWithServer(file) {
-      // Create FormData
-      const formData = new FormData();
-      formData.append('content_type', file.type);
-      formData.append('file', file);
-      
-      try {
-        // Send to server
-        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PROCESS_FORM_UPLOAD}`, {
-          method: 'POST',
-          body: formData
+    function setupEventListeners() {
+        // Chat form submission
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const userMessage = chatInputField.value.trim();
+            if (userMessage) {
+                addMessage('user', userMessage);
+                chatInputField.value = '';
+                
+                // Show typing indicator
+                showTypingIndicator();
+                
+                // Process the user's message
+                processUserMessage(userMessage);
+            }
         });
         
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
+        // Fallback command input (disabled - using side panel instead)
+        /* Command input functionality has been removed */
         
-        const result = await response.json();
-        console.log('PDF processing result:', result);
-        
-        // Hide loader
-        hideLoader();
-
-        // Check if we got valid results
-        if (result && result.fields && result.fields.length > 0) {
-          // Create a form data object for compatibility
-          const formData = {
-            formId: 'pdf-form-' + Date.now(),
-            formType: result.form_type || 'pdf',
-            fields: result.fields.map(field => ({
-              ...field,
-              element: field.name
-            }))
-          };
-          
-          // Process like a regular form
-          handleFormDetected(formData);
-          
-          // Add confirmation message
-          addChatMessage('ai', `I've processed your PDF form and detected ${result.fields.length} fields. You can now ask questions about any field.`);
+        // Auto-fill button
+        if (autofillButton) {
+            console.log("Adding click handler to autofillButton:", autofillButton);
+            autofillButton.addEventListener('click', function() {
+                console.log("autofillButton clicked!");
+                animateButton(autofillButton);
+                autoFillForm();
+            });
         } else {
-          addChatMessage('ai', 'I couldn\'t detect any fields in this PDF. The document might be scanned at a low quality or doesn\'t contain form fields. Please try another PDF or a clearer scan.');
-        }
-      } catch (error) {
-        console.error('Error processing PDF:', error);
-        addChatMessage('ai', 'An error occurred while processing the PDF. Please try again with a different file or check your connection.');
-        hideLoader();
-      }
-      
-      // Reset flag
-      isProcessingPdf = false;
-    }
-    
-    // Show loading spinner
-    function showLoader(message) {
-      if (loaderContainer) {
-        const loaderText = document.getElementById('loader-text');
-        if (loaderText) {
-          loaderText.textContent = message || 'Processing...';
-        }
-        loaderContainer.style.display = 'flex';
-      }
-      
-      // Hide other containers
-      if (fieldsContainer) fieldsContainer.style.display = 'none';
-      if (uploadContainer) uploadContainer.style.display = 'none';
-    }
-    
-    // Hide loading spinner
-    function hideLoader() {
-      if (loaderContainer) {
-        loaderContainer.style.display = 'none';
-      }
-    }
-    
-    // Show upload container when no form is detected
-    function showUploadContainer() {
-      if (uploadContainer) {
-        uploadContainer.style.display = 'flex';
-      }
-      
-      // Hide other containers
-      if (fieldsContainer) fieldsContainer.style.display = 'none';
-      if (loaderContainer) loaderContainer.style.display = 'none';
-    }
-  
-    // Add this to your handleMessage function inside the function body
-    // Right after the other message handling cases
-    function handleMessage(message, sender, sendResponse) {
-        console.log('Received message:', message);
-        
-        if (message.action === 'formDetected') {
-            handleFormDetected(message.formData);
-            sendResponse({success: true});
-        } else if (message.action === 'noFormsFound') {
-            updateStatus('No forms found on this page.');
-            showUploadContainer();
-            addChatMessage('ai', 'I didn\'t find any forms on this page. You can upload a PDF form if you have one, or navigate to a page with a form.');
-            sendResponse({success: true});
-        } else if (message.action === 'autoFillResult') {
-            handleAutoFillResult(message.result);
-            sendResponse({success: true});
-        } else if (message.action === 'saveFieldValue') {
-            saveFieldToProfile(message.fieldName, message.fieldValue);
-            sendResponse({success: true});
+            console.error("Cannot add click handler - autofillButton not found in DOM");
         }
         
-        return true;
+        // Auto-fill with profile button
+        autofillProfileButton.addEventListener('click', function() {
+            animateButton(autofillProfileButton);
+            const profileId = profileSelector.value;
+            if (profileId && profiles[profileId]) {
+                autoFillFormWithProfile(profileId);
+            } else {
+                addMessage('system', 'Please select a profile first');
+            }
+        });
+        
+        // Profile selector change
+        profileSelector.addEventListener('change', function() {
+            const profileId = profileSelector.value;
+            if (profileId && profiles[profileId]) {
+                addMessage('system', `Selected profile: ${profiles[profileId].name}`);
+            }
+        });
+        
+        // Add profile button
+        profileAddButton.addEventListener('click', function() {
+            animateButton(profileAddButton);
+            // This would open a modal to create a profile in a more complete version
+            addMessage('system', 'Profile creation coming soon!');
+        });
+        
+        // Upload PDF button
+        uploadPdfButton.addEventListener('click', function() {
+            animateButton(uploadPdfButton);
+            // This would be implemented in a more complete version
+            addMessage('system', 'PDF upload functionality coming soon!');
+        });
+        
+        // Panel toggle
+        panelToggle.addEventListener('click', function() {
+            togglePanel();
+        });
+        
+        // Help button (keyboard shortcuts)
+        helpButton.addEventListener('click', function() {
+            animateButton(helpButton);
+            toggleShortcutsModal(true);
+        });
+        
+        // Close modal button
+        closeModalButton.addEventListener('click', function() {
+            toggleShortcutsModal(false);
+        });
+        
+        // High contrast toggle
+        highContrastToggle.addEventListener('click', function() {
+            animateButton(highContrastToggle);
+            document.body.classList.toggle('high-contrast');
+            savePreferences();
+            addMessage('system', document.body.classList.contains('high-contrast') ? 
+                'High contrast mode enabled' : 'High contrast mode disabled');
+        });
+        
+        // Suggestion chips
+        const chips = suggestionChips.querySelectorAll('.chip');
+        chips.forEach(chip => {
+            chip.addEventListener('click', function() {
+                const question = chip.dataset.value;
+                chatInputField.value = question;
+                chatInputField.focus();
+            });
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // ? key to show shortcuts
+            if (e.key === '?') {
+                toggleShortcutsModal(true);
+            }
+            
+            // Escape key to close modals
+            if (e.key === 'Escape') {
+                toggleShortcutsModal(false);
+            }
+            
+            // Alt + F to focus on fields panel
+            if (e.altKey && e.key === 'f') {
+                if (fieldsList.firstElementChild) {
+                    fieldsList.firstElementChild.focus();
+                }
+            }
+            
+            // Alt + C to focus on chat input
+            if (e.altKey && e.key === 'c') {
+                chatInputField.focus();
+            }
+            
+            // Alt + A to auto-fill
+            if (e.altKey && e.key === 'a') {
+                autoFillForm();
+            }
+            
+            // Alt + P to toggle panel
+            if (e.altKey && e.key === 'p') {
+                togglePanel();
+            }
+        });
+        
+        // Click outside modal to close
+        shortcutsModal.addEventListener('click', function(e) {
+            if (e.target === shortcutsModal) {
+                toggleShortcutsModal(false);
+            }
+        });
+        
+        // Listen for messages from content scripts
+        chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+            console.log('📣 Panel received message:', request);
+            
+            // Debug: Log full message details
+            if (request.formData) {
+                console.log('📊 Form Data Details:', {
+                    formId: request.formData.formId,
+                    fields: request.formData.fields?.length || 0,
+                    formType: request.formData.formType,
+                    methods: request.formData.detectionMethod || request.formData.detectionMethods
+                });
+            }
+            
+            if (request.action === 'formDetected') {
+                console.log('🔄 Processing formDetected message with', 
+                            request.formData?.fields?.length || 0, 'fields');
+                handleFormDetected(request.formData);
+                sendResponse({received: true, status: 'processed formDetected'});
+            }
+            else if (request.action === 'formDataUpdated') {
+                console.log('🔄 Processing formDataUpdated message with', 
+                            request.formData?.fields?.length || 0, 'fields');
+                handleFormDetected(request.formData);
+                sendResponse({received: true, status: 'processed formDataUpdated'});
+            }
+            else if (request.action === 'formsFound') {
+                console.log('🔄 Processing formsFound message with', 
+                            request.details?.fieldsCount || 0, 'fields');
+                
+                // This is just a notification without data, wait for the formDetected message
+                sendResponse({received: true, status: 'acknowledged formsFound'});
+            }
+            else if (request.action === 'noFormsFound') {
+                console.log('🔄 Processing noFormsFound message');
+                showNoFormsMessage();
+                sendResponse({received: true, status: 'processed noFormsFound'});
+            }
+            else if (request.action === 'testMessage') {
+                console.log('🧪 TEST MESSAGE RECEIVED:', request.message);
+                sendResponse({received: true, status: 'test message acknowledged'});
+            }
+            
+            return true;
+        });
     }
-  
-    // Handle form detection
+    
+    // Show/hide the shortcuts modal
+    function toggleShortcutsModal(show) {
+        if (show) {
+            shortcutsModal.classList.add('visible');
+            shortcutsModal.setAttribute('aria-hidden', 'false');
+        } else {
+            shortcutsModal.classList.remove('visible');
+            shortcutsModal.setAttribute('aria-hidden', 'true');
+        }
+    }
+    
+    // Show typing indicator animation
+    function showTypingIndicator() {
+        isTyping = true;
+        typingIndicator.classList.add('visible');
+    }
+    
+    // Hide typing indicator animation
+    function hideTypingIndicator() {
+        isTyping = false;
+        typingIndicator.classList.remove('visible');
+    }
+    
+    // Animate button click
+    function animateButton(button) {
+        button.classList.add('click-animation');
+        setTimeout(() => button.classList.remove('click-animation'), 300);
+    }
+    
+    // Toggle the fields panel
+    function togglePanel() {
+        container.classList.toggle('panel-collapsed');
+        fieldsPanel.classList.toggle('collapsed');
+        panelToggle.classList.toggle('collapsed');
+        
+        const isCollapsed = fieldsPanel.classList.contains('collapsed');
+        panelToggle.querySelector('.toggle-icon').textContent = isCollapsed ? 'chevron_right' : 'chevron_left';
+        
+        // Announce panel state for screen readers
+        const message = isCollapsed ? 'Fields panel collapsed' : 'Fields panel expanded';
+        addMessage('system', message);
+    }
+    
+    // Update profile selector dropdown with available profiles
+    function updateProfileSelector() {
+        // Clear current options except the placeholder
+        while (profileSelector.options.length > 1) {
+            profileSelector.options.remove(1);
+        }
+        
+        // Add profiles to selector
+        Object.keys(profiles).forEach(id => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = profiles[id].name;
+            profileSelector.appendChild(option);
+        });
+    }
+    
+    // Handle form detection data
     function handleFormDetected(formData) {
-      console.log('Form detected:', formData);
-      
-      // Store form data - Make sure to store the complete formData, not just the fields
-      currentFormId = formData.formId;
-      
-      // Store in both ways to ensure availability
-      window.formData = formData;
-      
-      // Ensure we have the fields properly stored
-      if (formData.fields && Array.isArray(formData.fields)) {
-        detectedFields = formData.fields;
-      } else {
-        detectedFields = [];
-      }
-      
-      // Also store the form context separately for easier access
-      if (formData.formContext) {
-        console.log("Storing form context:", formData.formContext);
-        detectedFields.formContext = formData.formContext;
-      }
-      
-      // Hide loader and upload container
-      hideLoader();
-      if (uploadContainer) uploadContainer.style.display = 'none';
-      
-      // Update UI
-      updateStatus(`Found ${formData.fields.length} field${formData.fields.length === 1 ? '' : 's'}`);
-      displayFields(formData.fields);
-      
-      // Add welcome message if this is first detection
-      if (chatContainer.childElementCount === 0) {
-        // Add a more descriptive welcome message if form type is known
-        if (formData.formContext && formData.formContext.form_type && 
-            formData.formContext.form_type !== "unknown form") {
-          const formType = formData.formContext.form_type.replace(" form", "").trim();
-          addChatMessage('ai', `I found a ${formType} form with ${formData.fields.length} field${formData.fields.length === 1 ? '' : 's'}. This form is for ${formData.formContext.form_purpose || 'collecting information'}. Click on any field to learn more about it, or ask me a question.`);
-        } else {
-          addChatMessage('ai', `I found a form with ${formData.fields.length} field${formData.fields.length === 1 ? '' : 's'}. Click on any field to learn more about it, or ask me a question.`);
-        }
-      } else if (isProcessingPdf) {
-        // We've already added a message in PDF processing
-        isProcessingPdf = false;
-      }
+        currentFormData = formData;
+        formFields = formData.fields || [];
+        
+        // Update fields count
+        fieldsCount.textContent = formFields.length;
+        
+        // Clear and populate fields list
+        fieldsList.innerHTML = '';
+        formFields.forEach(function(field, index) {
+            const fieldItem = createFieldItem(field, index);
+            fieldsList.appendChild(fieldItem);
+        });
+        
+        // Add keyboard navigation to field items
+        addKeyboardNavigation();
+        
+        // Show a form detected message
+        const formType = formData.formContext?.form_type || 'form';
+        addMessage('system', `Detected a ${formType} with ${formFields.length} fields`);
     }
-  
-    // Display fields in sidebar - MODIFIED to not add buttons inside this container
-    function displayFields(fields) {
-      if (!fieldsContainer) return;
-      
-      fieldsContainer.innerHTML = '';
-      fieldsContainer.style.display = 'block';
-      
-      // Create a container for the fields (scrollable)
-      const fieldsList = document.createElement('div');
-      fieldsList.className = 'fields-list';
-      fieldsList.style.cssText = `
-        max-height: 300px;
-        overflow-y: auto;
-        padding-bottom: 10px;
-      `;
-      
-      fields.forEach(field => {
+    
+    // Add keyboard navigation to field items
+    function addKeyboardNavigation() {
+        const fieldItems = fieldsList.querySelectorAll('.field-item');
+        
+        fieldItems.forEach((item, index) => {
+            item.tabIndex = 0; // Make item focusable
+            
+            item.addEventListener('keydown', function(e) {
+                // Enter or Space to click
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    item.click();
+                }
+                
+                // Arrow down to move to next field
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    const nextItem = fieldItems[index + 1];
+                    if (nextItem) nextItem.focus();
+                }
+                
+                // Arrow up to move to previous field
+                if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const prevItem = fieldItems[index - 1];
+                    if (prevItem) prevItem.focus();
+                }
+            });
+        });
+    }
+    
+    // Create a field item element with icon and expandable details
+    function createFieldItem(field, index) {
         const fieldItem = document.createElement('div');
         fieldItem.className = 'field-item';
+        fieldItem.dataset.index = index;
+        fieldItem.tabIndex = 0; // Make focusable
+        fieldItem.setAttribute('role', 'button');
+        fieldItem.setAttribute('aria-expanded', 'false');
         
-        // Determine icon based on field type
-        let icon = '📄';
-        if (field.type === 'email') icon = '📧';
-        else if (field.type === 'password') icon = '🔒';
-        else if (field.type === 'tel') icon = '📞';
-        else if (field.type === 'number') icon = '🔢';
-        else if (field.type === 'date') icon = '📅';
-        else if (field.type === 'checkbox') icon = '☑️';
-        else if (field.type === 'radio') icon = '⚪';
-        else if (field.type === 'textarea') icon = '📝';
+        // Get field details
+        const fieldLabel = field.label || field.name || 'Field ' + (index + 1);
+        const fieldType = field.type || 'text';
+        const iconName = FIELD_ICONS[fieldType] || FIELD_ICONS.default;
         
-        fieldItem.innerHTML = `
-          <div class="field-icon">${icon}</div>
-          <div class="field-details">
-            <div class="field-label">${field.label || field.name || 'Unnamed Field'}</div>
-            <div class="field-type">${field.type || 'text'} ${field.required ? '(required)' : ''}</div>
-          </div>
-        `;
+        // Create field icon
+        const iconEl = document.createElement('i');
+        iconEl.className = 'material-icons field-icon';
+        iconEl.textContent = iconName;
+        iconEl.setAttribute('aria-hidden', 'true');
         
-        // Add click handler to select and highlight field
+        // Create field details container
+        const detailsEl = document.createElement('div');
+        detailsEl.className = 'field-details';
+        
+        // Create field header with actions
+        const headerEl = document.createElement('div');
+        headerEl.className = 'field-header';
+        
+        // Create field name element
+        const nameEl = document.createElement('div');
+        nameEl.className = 'field-name';
+        nameEl.textContent = fieldLabel;
+        
+        // Create field actions
+        const actionsEl = document.createElement('div');
+        actionsEl.className = 'field-actions';
+        
+        // Add quick-fill button
+        const fillBtn = document.createElement('button');
+        fillBtn.className = 'field-fill-button';
+        fillBtn.textContent = 'Fill';
+        fillBtn.setAttribute('aria-label', `Fill ${fieldLabel} field`);
+        fillBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent fieldItem click
+            animateButton(fillBtn);
+            fillSingleField(field);
+        });
+        
+        // Add expand/collapse button
+        const expandBtn = document.createElement('button');
+        expandBtn.className = 'field-expand-button';
+        expandBtn.setAttribute('aria-label', 'Expand field details');
+        expandBtn.innerHTML = '<i class="material-icons">expand_more</i>';
+        expandBtn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent fieldItem click
+            toggleFieldDetails(fieldItem);
+        });
+        
+        // Add required badge if field is required
+        if (field.required) {
+            const requiredBadge = document.createElement('span');
+            requiredBadge.className = 'required-badge';
+            requiredBadge.textContent = 'Required';
+            nameEl.appendChild(requiredBadge);
+        }
+        
+        // Create field type element with icon
+        const typeEl = document.createElement('div');
+        typeEl.className = 'field-type';
+        
+        const typeIconEl = document.createElement('i');
+        typeIconEl.className = 'material-icons';
+        typeIconEl.textContent = iconName;
+        typeIconEl.setAttribute('aria-hidden', 'true');
+        
+        typeEl.appendChild(typeIconEl);
+        typeEl.appendChild(document.createTextNode(fieldType));
+        
+        // Create expandable details section
+        const expandedDetailsEl = document.createElement('div');
+        expandedDetailsEl.className = 'field-details-expanded';
+        
+        // Add validation patterns if available for this field type
+        if (VALIDATION_PATTERNS[fieldType]) {
+            const validationEl = document.createElement('div');
+            validationEl.className = 'field-validation-patterns';
+            
+            const validationTitle = document.createElement('div');
+            validationTitle.className = 'field-suggestion-title';
+            validationTitle.textContent = 'Validation patterns:';
+            validationEl.appendChild(validationTitle);
+            
+            VALIDATION_PATTERNS[fieldType].forEach(pattern => {
+                const patternEl = document.createElement('div');
+                patternEl.className = 'validation-pattern';
+                
+                const checkIcon = document.createElement('i');
+                checkIcon.className = 'material-icons';
+                checkIcon.textContent = 'check_circle';
+                checkIcon.setAttribute('aria-hidden', 'true');
+                
+                patternEl.appendChild(checkIcon);
+                patternEl.appendChild(document.createTextNode(`${pattern.pattern} (e.g., ${pattern.example})`));
+                validationEl.appendChild(patternEl);
+            });
+            
+            expandedDetailsEl.appendChild(validationEl);
+        }
+        
+        // Add field suggestions section
+        const suggestionsEl = document.createElement('div');
+        suggestionsEl.className = 'field-suggestions';
+        
+        const suggestionsTitle = document.createElement('div');
+        suggestionsTitle.className = 'field-suggestion-title';
+        suggestionsTitle.textContent = 'Suggested values:';
+        suggestionsEl.appendChild(suggestionsTitle);
+        
+        const suggestionsList = document.createElement('div');
+        suggestionsList.className = 'field-suggestions-list';
+        
+        // Add sample suggestions based on field type
+        let suggestions = [];
+        switch (fieldType) {
+            case 'email':
+                suggestions = ['john.doe@example.com', 'jane.doe@example.com'];
+                break;
+            case 'tel':
+                suggestions = ['1234567890', '(123) 456-7890'];
+                break;
+            case 'text':
+                if (fieldLabel.toLowerCase().includes('name')) {
+                    suggestions = ['John Doe', 'Jane Doe'];
+                } else if (fieldLabel.toLowerCase().includes('address')) {
+                    suggestions = ['123 Main St', '456 Oak Ave'];
+                }
+                break;
+            default:
+                suggestions = ['Sample value'];
+        }
+        
+        suggestions.forEach(suggestion => {
+            const suggestionEl = document.createElement('div');
+            suggestionEl.className = 'field-suggestion';
+            suggestionEl.textContent = suggestion;
+            suggestionEl.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent fieldItem click
+                fillFieldWithValue(field, suggestion);
+            });
+            suggestionsList.appendChild(suggestionEl);
+        });
+        
+        suggestionsEl.appendChild(suggestionsList);
+        expandedDetailsEl.appendChild(suggestionsEl);
+        
+        // Assemble the field header
+        actionsEl.appendChild(fillBtn);
+        actionsEl.appendChild(expandBtn);
+        headerEl.appendChild(nameEl);
+        headerEl.appendChild(actionsEl);
+        
+        // Assemble the field item
+        detailsEl.appendChild(headerEl);
+        detailsEl.appendChild(typeEl);
+        detailsEl.appendChild(expandedDetailsEl);
+        
+        fieldItem.appendChild(iconEl);
+        fieldItem.appendChild(detailsEl);
+        
+        // Add click handler
         fieldItem.addEventListener('click', function() {
-          // Update UI to show selected field
-          document.querySelectorAll('.field-item').forEach(el => {
-            el.classList.remove('selected');
-          });
-          fieldItem.classList.add('selected');
-          
-          // Set current field context
-          currentFieldContext = field;
-          
-          // Highlight field on page (not for PDFs)
-          if (!isProcessingPdf) {
-            highlightField(field.name || field.id || field.element);
-          }
-          
-          // Add message to chat
-          const fieldName = field.label || field.name || 'this field';
-          addChatMessage('user', `What is ${fieldName} for?`);
-          
-          // Get field explanation (from server if available, otherwise fallback)
-          getFieldExplanation(field).then(explanation => {
-            addChatMessage('ai', explanation);
-          });
+            // Remove selected class from all fields
+            const allFields = fieldsList.querySelectorAll('.field-item');
+            allFields.forEach(item => item.classList.remove('selected'));
+            
+            // Add selected class to clicked field
+            fieldItem.classList.add('selected');
+            
+            // Update current field index
+            currentFieldIndex = index;
+            
+            // Update active field indicator
+            updateActiveFieldIndicator(fieldLabel);
+            
+            // Highlight the field on the page
+            highlightField(field.name || field.id);
+            
+            // Get information about this field
+            getFieldInfo(field);
+            
+            // Pre-populate chat input with question about field
+            chatInputField.value = `Tell me about ${fieldLabel}`;
+            chatInputField.focus();
+            chatInputField.setSelectionRange(0, chatInputField.value.length);
         });
         
-        fieldsList.appendChild(fieldItem);
-      });
-      
-      // Add the fields list to the fieldsContainer
-      fieldsContainer.appendChild(fieldsList);
+        return fieldItem;
     }
-  
-    // Highlight field on page
-    function highlightField(fieldSelector) {
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: 'highlightField',
-          fieldName: fieldSelector
-        });
-      });
-    }
-  
-    // Auto-fill all fields
-    function autoFillAllFields() {
-        if (!currentFormId) return;
+    
+    // Toggle field details expansion
+    function toggleFieldDetails(fieldItem) {
+        const isExpanded = fieldItem.getAttribute('aria-expanded') === 'true';
+        fieldItem.setAttribute('aria-expanded', !isExpanded);
         
-        // Check if we have a profile with field values
-        const hasProfileData = userProfile && 
-                              userProfile.field_values && 
-                              Object.keys(userProfile.field_values).length > 0;
-        
-        // Log profile data being used for autofill
-        if (hasProfileData) {
-            console.log('Using profile data for autofill:', userProfile.field_values);
+        const expandBtn = fieldItem.querySelector('.field-expand-button');
+        if (expandBtn) {
+            expandBtn.setAttribute('aria-label', isExpanded ? 'Expand field details' : 'Collapse field details');
         }
+    }
+    
+    // Update active field indicator in chat header
+    function updateActiveFieldIndicator(fieldName) {
+        activeFieldName.textContent = fieldName;
+        activeFieldIndicator.classList.add('active');
+    }
+    
+    // Fill a single field with a sample value
+    function fillSingleField(field) {
+        if (!field || !field.name) return;
+        
+        // Get a sample value based on field type and name
+        const value = getSampleValue(field);
+        fillFieldWithValue(field, value);
+    }
+    
+    // Fill a field with a specific value
+    function fillFieldWithValue(field, value) {
+        if (!field || !field.name) return;
         
         chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {
-                action: 'autoFillForm',
-                formId: currentFormId,
-                profileData: hasProfileData ? userProfile.field_values : null
-            }, function(response) {
-                if (response && response.success) {
-                    // Provide feedback based on whether profile data was used
-                    const messageText = hasProfileData ? 
-                        `I've filled ${response.count} field${response.count === 1 ? '' : 's'} with your saved data where available, and sample data for the rest.` :
-                        `I've filled ${response.count} field${response.count === 1 ? '' : 's'} with sample data.`;
-                    
-                    addChatMessage('ai', messageText);
-                }
-            });
-        });
-    }
-    
-    // Handle auto-fill result
-    function handleAutoFillResult(result) {
-      if (result && result.success) {
-        // Check if we have a profile with field values
-        const hasProfileData = userProfile && 
-                              userProfile.field_values && 
-                              Object.keys(userProfile.field_values).length > 0;
-                              
-        // Provide feedback based on whether profile data was used
-        const messageText = hasProfileData ? 
-            `I've filled ${result.count} field${result.count === 1 ? '' : 's'} with your saved data where available, and sample data for the rest.` :
-            `I've filled ${result.count} field${result.count === 1 ? '' : 's'} with sample data.`;
-            
-        addChatMessage('ai', messageText);
-      } else {
-        addChatMessage('ai', 'There was an issue auto-filling the form. Please try again or fill the form manually.');
-      }
-    }
-  
-    // Handle chat form submission
-    function handleChatSubmit(e) {
-      e.preventDefault();
-      
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
-      
-      if (!message) return;
-      
-      // Add user message to chat
-      addChatMessage('user', message);
-      
-      // Clear input
-      input.value = '';
-      
-      // Special handling for "what is this form for" question
-      const lowerMessage = message.toLowerCase();
-      if (lowerMessage.includes('what') && 
-          lowerMessage.includes('form') && 
-          (lowerMessage.includes('for') || lowerMessage.includes('about') || lowerMessage.includes('is this'))) {
-          
-        // Add a temporary "thinking" message
-        const thinkingId = 'thinking-' + Date.now();
-        addChatMessage('ai', 'Analyzing form...', thinkingId);
-        
-        // Special handling to directly ask the content script about the form
-        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-          if (tabs && tabs.length > 0) {
-            // Send message directly to content script
-            chrome.tabs.sendMessage(
-              tabs[0].id, 
-              {action: 'getFormContextResponse', question: message},
-              function(response) {
-                // Remove the thinking message
-                const thinkingElement = document.getElementById(thinkingId);
-                if (thinkingElement) {
-                  thinkingElement.remove();
-                }
-                
-                if (response && response.formContextResponse) {
-                  // Success: add the response
-                  addChatMessage('ai', response.formContextResponse);
-                } else {
-                  // Fall back to standard AI response
-                  getAIResponse(message).then(result => {
-                    addChatMessage('ai', result);
-                  }).catch(error => {
-                    console.error('Error getting fallback response:', error);
-                    addChatMessage('ai', "This appears to be a form for collecting information. I can help you understand specific fields if you have questions about them.");
-                  });
-                }
-              }
-            );
-          } else {
-            // No tab found, remove thinking message
-            const thinkingElement = document.getElementById(thinkingId);
-            if (thinkingElement) {
-              thinkingElement.remove();
-            }
-            
-            // Use standard AI response
-            getAIResponse(message).then(result => {
-              addChatMessage('ai', result);
-            }).catch(error => {
-              console.error('Error getting response:', error);
-              addChatMessage('ai', "I'm sorry, I couldn't determine what this form is for. Please ask about specific fields if you need help with them.");
-            });
-          }
-        });
-        
-        return; // Skip the standard AI response flow
-      }
-      
-      // Standard flow for other questions
-      
-      // Add a temporary "thinking" message
-      const thinkingId = 'thinking-' + Date.now();
-      addChatMessage('ai', 'Thinking...', thinkingId);
-      
-      // Get AI response (from server if available, otherwise fallback)
-      getAIResponse(message).then(response => {
-        // Remove the thinking message
-        const thinkingElement = document.getElementById(thinkingId);
-        if (thinkingElement) {
-          thinkingElement.remove();
-        }
-        
-        // Add AI response to chat
-        addChatMessage('ai', response);
-      }).catch(error => {
-        console.error('Error getting AI response:', error);
-        
-        // Remove the thinking message
-        const thinkingElement = document.getElementById(thinkingId);
-        if (thinkingElement) {
-          thinkingElement.remove();
-        }
-        
-        // Add error message
-        addChatMessage('ai', "I'm sorry, I couldn't generate a response. Please try asking another question.");
-      });
-    }
-  
-    // Get AI response to user question
-    async function getAIResponse(question) {
-      // Try server first if connected
-      if (serverConnected) {
-        try {
-          // Prepare enhanced payload with more context
-          const payload = {
-            question: question,
-            field_context: currentFieldContext,
-            form_context: {
-              form_type: "html_form",
-              fields: detectedFields
-            }
-          };
-          
-          // We'll just use the regular AI endpoint with our enhanced context
-          // The backend will use the best available AI system (Smart, Hybrid or Legacy) to process this
-          
-          // Call regular AI endpoint as fallback
-          const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ASK}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('AI response from server:', data);
-            return data.response || data.answer;
-          } else {
-            console.warn('Server response not OK:', response.status);
-            // Fall back to local processing
-          }
-        } catch (error) {
-          console.error('Error getting AI response from server:', error);
-          // Fall back to local processing
-        }
-      }
-      
-      // Fallback to local processing
-      console.log('Using fallback AI response');
-      // Handle the async fallback function properly
-      return await getFallbackAIResponse(question);
-    }
-    
-    // Fallback AI response using local knowledge base
-    // Now returns a promise for async handling
-    async function getFallbackAIResponse(question) {
-      const questionLower = question.toLowerCase();
-      
-      // Check if it's about form context
-      if ((questionLower.includes('what') || questionLower.includes('which')) && 
-          (questionLower.includes('form') || questionLower.includes('page')) &&
-          (questionLower.includes('is this') || questionLower.includes('type') || 
-           questionLower.includes('kind') || questionLower.includes('purpose'))) {
-        
-        return await getFormContextResponse(question);
-      }
-      
-      // Check if it's about a specific field
-      if (currentFieldContext) {
-        const fieldName = currentFieldContext.label || currentFieldContext.name || 'this field';
-        const fieldNameLower = fieldName.toLowerCase();
-        
-        // If question mentions the current field
-        if (questionLower.includes(fieldNameLower) || 
-            questionLower.includes('this field') || 
-            questionLower.includes('the field') ||
-            questionLower.includes('field')) {
-            
-          // Get field-specific response
-          return getFieldResponse(currentFieldContext, question);
-        }
-      }
-      
-      // Check predefined questions
-      for (const [key, value] of Object.entries(COMMON_QUESTIONS)) {
-        if (questionLower.includes(key)) {
-          return value;
-        }
-      }
-      
-      // Check if about specific field types
-      for (const [key, value] of Object.entries(SPECIFIC_FIELDS)) {
-        if (questionLower.includes(key)) {
-          // Determine which aspect they're asking about
-          if (questionLower.includes('what') || questionLower.includes('why') || questionLower.includes('purpose')) {
-            return value.purpose;
-          } else if (questionLower.includes('format') || questionLower.includes('how')) {
-            return `${value.format} Examples: ${value.examples}`;
-          } else if (questionLower.includes('require') || questionLower.includes('need')) {
-            return value.required;
-          } else if (questionLower.includes('privacy') || questionLower.includes('use')) {
-            return value.privacy;
-          } else if (questionLower.includes('secure') || questionLower.includes('safe')) {
-            return value.security;
-          } else {
-            return value.purpose;
-          }
-        }
-      }
-      
-      // Generic responses for form questions
-      if (questionLower.includes('form')) {
-        return await getFormContextResponse(question);
-      } else if (questionLower.includes('help')) {
-        return "I can help you understand what different fields are for and how to fill them out correctly. Click on any field to see more information, or ask me a specific question.";
-      } else if (questionLower.includes('auto') && questionLower.includes('fill')) {
-        return "Click the 'Auto-fill All Fields' button to automatically fill out the form with sample data. This can be useful for testing or quickly completing the form.";
-      } else if (questionLower.includes('pdf')) {
-        return "You can upload a PDF form by clicking the 'Upload PDF' button. I'll analyze the form and help you understand the fields it contains.";
-      } else if (questionLower.includes('personal') && questionLower.includes('info')) {
-        return "Personal information is collected to identify you and communicate with you. This typically includes your name, contact information, and sometimes demographic details.";
-      }
-      
-      // Default response
-      return "I can help you understand this form better. Feel free to ask about specific fields or the purpose of this form. You can also click on any field in the list to get information about it.";
-    }
-    
-    // Get a response about the form context
-    // Changed to return a Promise that resolves with the response
-    async function getFormContextResponse(question) {
-      console.log("Getting form context response for question:", question);
-      
-      // Check if we have detected form context
-      const formContext = getCurrentFormContext();
-      console.log("Current form context:", formContext);
-      
-      // Use a Promise to handle async communication with content script
-      return new Promise((resolve) => {
-        // Try to get a response from content script first
-        if (typeof chrome !== 'undefined' && chrome.tabs) {
-          try {
-            // Get the current tab to access content script
-            chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-              if (tabs && tabs.length > 0) {
-                console.log("Sending message to content script in tab:", tabs[0].id);
-                
-                // Set a timeout to ensure we don't wait forever
-                const timeoutId = setTimeout(() => {
-                  console.log("Content script response timed out, using local fallback");
-                  resolve(generateLocalFormResponse(question, formContext));
-                }, 1000);
-                
-                // Try to use the formContextAnalyzer from the content script
-                chrome.tabs.sendMessage(
-                  tabs[0].id, 
-                  {action: 'getFormContextResponse', question: question},
-                  function(response) {
-                    clearTimeout(timeoutId); // Clear the timeout
-                    console.log("Received response from content script:", response);
-                    
-                    if (response && response.formContextResponse) {
-                      resolve(response.formContextResponse);
+            if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'fillField',
+                    fieldName: field.name,
+                    value: value
+                }, function(response) {
+                    if (response && response.success) {
+                        addMessage('system', `Filled field "${field.label || field.name}" with "${value}"`);
                     } else {
-                      // Fall back to local processing
-                      resolve(generateLocalFormResponse(question, formContext));
+                        addMessage('system', `Failed to fill field "${field.label || field.name}"`);
                     }
-                  }
-                );
-              } else {
-                // No tabs found, use local fallback
-                resolve(generateLocalFormResponse(question, formContext));
-              }
+                });
+            }
+        });
+    }
+    
+    // Get a sample value based on field type and name
+    function getSampleValue(field) {
+        const fieldName = (field.name || '').toLowerCase();
+        const fieldLabel = (field.label || '').toLowerCase();
+        const fieldType = field.type || 'text';
+        
+        // Check field name/label for common patterns
+        if (fieldName.includes('email') || fieldLabel.includes('email') || fieldType === 'email') {
+            return 'user@example.com';
+        }
+        
+        if (fieldName.includes('phone') || fieldLabel.includes('phone') || fieldType === 'tel') {
+            return '1234567890';
+        }
+        
+        if (fieldName.includes('password') || fieldLabel.includes('password') || fieldType === 'password') {
+            return 'P@ssw0rd!';
+        }
+        
+        if (fieldName.includes('name') || fieldLabel.includes('name')) {
+            if (fieldName.includes('first') || fieldLabel.includes('first')) {
+                return 'John';
+            }
+            if (fieldName.includes('last') || fieldLabel.includes('last')) {
+                return 'Doe';
+            }
+            return 'John Doe';
+        }
+        
+        if (fieldName.includes('address') || fieldLabel.includes('address')) {
+            return '123 Main St';
+        }
+        
+        if (fieldName.includes('city') || fieldLabel.includes('city')) {
+            return 'New York';
+        }
+        
+        if (fieldName.includes('state') || fieldLabel.includes('state')) {
+            return 'NY';
+        }
+        
+        if (fieldName.includes('zip') || fieldLabel.includes('zip') || fieldName.includes('postal') || fieldLabel.includes('postal')) {
+            return '10001';
+        }
+        
+        if (fieldName.includes('country') || fieldLabel.includes('country')) {
+            return 'USA';
+        }
+        
+        if (fieldType === 'checkbox') {
+            return true;
+        }
+        
+        if (fieldType === 'date') {
+            return '2023-01-01';
+        }
+        
+        // Default sample text
+        return 'Sample Text';
+    }
+    
+    // Get information about a specific field
+    function getFieldInfo(field) {
+        const fieldName = field.name || field.id || field.label || 'this field';
+        const fieldType = field.type || 'text';
+        
+        // Create a simple message about the field
+        let message = `## ${fieldName}\n\n`;
+        message += `This is a ${fieldType} field`;
+        
+        if (field.required) {
+            message += " and it's **required**";
+        } else {
+            message += " and it's optional";
+        }
+        
+        if (field.purpose) {
+            message += `.\n\nIt's used for ${field.purpose}.`;
+        } else {
+            message += '.';
+        }
+        
+        if (field.helpText) {
+            message += `\n\n${field.helpText}`;
+        }
+        
+        // Add specific guidance based on field type
+        message += '\n\n### Tips:';
+        
+        switch (fieldType) {
+            case 'email':
+                message += '\n- Enter a valid email address (e.g., example@domain.com)';
+                message += '\n- Email addresses must contain an @ symbol';
+                message += '\n- Make sure to use the correct domain';
+                break;
+            case 'password':
+                message += '\n- Use a strong, unique password';
+                message += '\n- Include a mix of upper and lowercase letters, numbers, and symbols';
+                message += '\n- Avoid using easily guessable information';
+                break;
+            case 'tel':
+                message += '\n- Enter a valid phone number in the required format';
+                message += '\n- Some forms require area codes or country codes';
+                message += '\n- Check for any specific format requirements';
+                break;
+            case 'date':
+                message += '\n- Use the correct date format (usually YYYY-MM-DD)';
+                message += '\n- Most forms provide a date picker for easier selection';
+                break;
+            default:
+                message += '\n- Enter information accurately';
+                message += '\n- Check for any specific format requirements';
+        }
+        
+        // Add validation patterns if available
+        if (VALIDATION_PATTERNS[fieldType]) {
+            message += '\n\n### Validation Requirements:';
+            VALIDATION_PATTERNS[fieldType].forEach(pattern => {
+                message += `\n- ${pattern.pattern} (e.g., ${pattern.example})`;
             });
-          } catch (error) {
-            console.error('Error getting form context response from content script:', error);
-            // Continue to fallback
-            resolve(generateLocalFormResponse(question, formContext));
-          }
-        } else {
-          // Chrome API not available, use local fallback
-          resolve(generateLocalFormResponse(question, formContext));
         }
-      });
+        
+        // Show the message after a brief delay to simulate processing
+        showTypingIndicator();
+        setTimeout(() => {
+            hideTypingIndicator();
+            addMessage('ai', message);
+        }, 600);
     }
     
-    // Generate a form response with the local context
-    function generateLocalFormResponse(question, formContext) {
-      console.log("Generating local form response with context:", formContext);
-      
-      // If we have valid form context
-      if (formContext && formContext.form_type && formContext.form_type !== "unknown form") {
-        // Construct a response based on the available context
-        const formType = formContext.form_type.replace(" form", "").trim();
+    // Show message when no forms are found
+    function showNoFormsMessage() {
+        fieldsList.innerHTML = '<div class="no-forms-message">No forms detected on this page</div>';
+        fieldsCount.textContent = '0';
         
-        // Questions about form type/what kind of form
-        if ((question.toLowerCase().includes('what') || question.toLowerCase().includes('which')) && 
-            (question.toLowerCase().includes('kind') || question.toLowerCase().includes('type'))) {
-          
-          const fieldCount = Array.isArray(detectedFields) ? detectedFields.length : 'multiple';
-          return `This is a ${formType} form for ${formContext.form_purpose || 'collecting information'}. It contains ${fieldCount} fields, including ${getMainFieldTypes(detectedFields)}.`;
-        }
-        
-        // Questions about form purpose
-        if (question.toLowerCase().includes('purpose') || 
-            (question.toLowerCase().includes('what') && question.toLowerCase().includes('for'))) {
-          
-          return `This ${formType} form is for ${formContext.form_purpose || 'collecting information'}. You'll need to fill out the required fields to ${getFormAction(formType)}.`;
-        }
-        
-        // Default form context response
-        return `This is a ${formType} form for ${formContext.form_purpose || 'collecting information'}.`;
-      }
-      
-      // Check fields to make an educated guess about form type
-      if (detectedFields && Array.isArray(detectedFields) && detectedFields.length > 0) {
-        // Simple form type detection based on fields
-        const hasPassword = detectedFields.some(f => 
-          (f.type === 'password') || (f.name && f.name.toLowerCase().includes('password'))
-        );
-        
-        const hasEmail = detectedFields.some(f => 
-          (f.type === 'email') || (f.name && f.name.toLowerCase().includes('email'))
-        );
-        
-        const hasMessage = detectedFields.some(f => 
-          (f.name && f.name.toLowerCase().includes('message')) || 
-          (f.type === 'textarea')
-        );
-        
-        if (hasPassword && hasEmail) {
-          return "This appears to be a login or registration form where you can enter your credentials to access or create an account. I can help explain any of the fields if you're unsure about them.";
-        } else if (hasEmail && hasMessage) {
-          return "This appears to be a contact form where you can send a message to the website owner or organization. I can help explain any of the fields if you're unsure about them.";
-        }
-      }
-      
-      // Very generic fallback if no context is available
-      return "This appears to be a form collecting your information. You'll need to fill out the fields to proceed. I can help explain any field you're unsure about.";
+        addMessage('system', 'No forms detected on this page. You can upload a PDF form instead.');
     }
     
-    // Get a summary of the main field types in the form
-    function getMainFieldTypes(fields) {
-      // Ensure fields is an array and not empty
-      if (!fields || !Array.isArray(fields) || fields.length === 0) return 'various fields';
-      
-      const fieldTypes = {};
-      
-      // Count occurrences of each field type
-      fields.forEach(field => {
-        if (field && typeof field === 'object') {
-          const type = field.purpose || field.type || 'text';
-          fieldTypes[type] = (fieldTypes[type] || 0) + 1;
-        }
-      });
-      
-      // If no field types were processed, return early
-      if (Object.keys(fieldTypes).length === 0) return 'various fields';
-      
-      // Get the top 3 most common field types
-      const topTypes = Object.entries(fieldTypes)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 3)
-        .map(entry => entry[0]);
-      
-      if (topTypes.length === 0) return 'various fields';
-      if (topTypes.length === 1) return topTypes[0] + ' fields';
-      if (topTypes.length === 2) return topTypes[0] + ' and ' + topTypes[1] + ' fields';
-      return topTypes[0] + ', ' + topTypes[1] + ', and ' + topTypes[2] + ' fields';
+    // Get formatted timestamp for messages
+    function getFormattedTimestamp() {
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        
+        hours = hours % 12;
+        hours = hours ? hours : 12; // Convert 0 to 12
+        
+        return `${hours}:${minutes} ${ampm}`;
     }
     
-    // Get the typical action for a form type
-    function getFormAction(formType) {
-      switch(formType.toLowerCase()) {
-        case 'login':
-          return 'sign in to your account';
-        case 'registration':
-          return 'create a new account';
-        case 'contact':
-          return 'send your message or inquiry';
-        case 'checkout':
-        case 'payment':
-          return 'complete your purchase';
-        case 'search':
-          return "find what you're looking for";
-        case 'survey':
-          return 'submit your feedback';
-        case 'subscription':
-          return 'sign up for updates';
-        case 'upload':
-          return 'upload your files';
-        default:
-          return 'submit the form';
-      }
-    }
-    
-    // Get the current form context
-    function getCurrentFormContext() {
-      try {
-        // First check if we have it directly in the formData structure
-        if (currentFormId) {
-          // Check if formContext is directly available in detectedFields
-          if (detectedFields && detectedFields.formContext) {
-            console.log("Found form context directly in detectedFields:", detectedFields.formContext);
-            return detectedFields.formContext;
-          }
-        }
-        
-        // If we didn't find it there, try to extract it from the data we have
-        const formData = getStoredFormData();
-        if (formData && formData.formContext) {
-          console.log("Found form context in stored data:", formData.formContext);
-          return formData.formContext;
-        }
-        
-        // Check if we have window.formData 
-        if (window.formData && window.formData.formContext) {
-          console.log("Found form context in window.formData:", window.formData.formContext);
-          return window.formData.formContext;
-        }
-        
-        // If still no context found, create a basic context from what we know
-        if (detectedFields && Array.isArray(detectedFields) && detectedFields.length > 0) {
-          // Analyze fields to determine form type
-          const hasPassword = detectedFields.some(f => f.type === 'password' || (f.name && f.name.toLowerCase().includes('password')));
-          const hasEmail = detectedFields.some(f => f.type === 'email' || (f.name && f.name.toLowerCase().includes('email')));
-          const hasText = detectedFields.some(f => f.type === 'textarea' || (f.name && f.name.toLowerCase().includes('message')));
-          
-          let formType = "unknown form";
-          let formPurpose = "collecting information";
-          
-          if (hasPassword && hasEmail) {
-            formType = hasPassword && detectedFields.some(f => 
-              f.name && (f.name.toLowerCase().includes('confirm') || f.name.toLowerCase().includes('signup'))) 
-              ? "registration form" 
-              : "login form";
-            formPurpose = formType === "registration form" 
-              ? "creating a new account" 
-              : "signing into an existing account";
-          } else if (hasEmail && hasText) {
-            formType = "contact form";
-            formPurpose = "sending a message to the website owner";
-          } else if (detectedFields.some(f => 
-            f.name && (f.name.toLowerCase().includes('payment') || f.name.toLowerCase().includes('card') || 
-                      f.name.toLowerCase().includes('credit') || f.name.toLowerCase().includes('checkout')))) {
-            formType = "payment form";
-            formPurpose = "processing a payment or checkout";
-          }
-          
-          console.log("Created basic form context from field analysis");
-          return {
-            form_type: formType,
-            form_purpose: formPurpose,
-            confidence: 0.7,
-            fields_count: detectedFields.length
-          };
-        }
-      } catch (error) {
-        console.error("Error retrieving form context:", error);
-      }
-      
-      // If all else fails, return a minimal generic context
-      console.log("No form context found, using generic context");
-      return {
-        form_type: "web form",
-        form_purpose: "collecting information",
-        confidence: 0.5
-      };
-    }
-    
-    // Helper to get form data from storage
-    function getStoredFormData() {
-      // Check if we have global form data
-      if (window.formData) {
-        return window.formData;
-      }
-      
-      // Check the detectedFields array if it has formContext
-      if (detectedFields) {
-        if (Array.isArray(detectedFields)) {
-          // It's just fields array, construct basic context
-          return {
-            formId: currentFormId,
-            fields: detectedFields,
-            formContext: {
-              form_type: "form",
-              form_purpose: "collecting information",
-              confidence: 0.5
+    // Add a message to the chat
+    function addMessage(type, text) {
+        // For system messages, check if it's duplicating previous ones
+        if (type === 'system') {
+            if (lastSystemMessage === text) {
+                // Don't add duplicate system messages
+                return;
             }
-          };
-        } else {
-          // It might be the full data structure
-          return detectedFields;
+            lastSystemMessage = text;
         }
-      }
-      
-      return null;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+        
+        // Create message container
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'message-container';
+        
+        // Create message avatar for AI or user messages
+        if (type === 'ai' || type === 'user') {
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            
+            const iconEl = document.createElement('i');
+            iconEl.className = `material-icons ${type}-icon`;
+            iconEl.textContent = type === 'ai' ? 'smart_toy' : 'person';
+            iconEl.setAttribute('aria-hidden', 'true');
+            
+            avatarDiv.appendChild(iconEl);
+            messageDiv.appendChild(avatarDiv);
+        }
+        
+        // Create message content
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        // Use markdown for AI messages if available
+        if (type === 'ai' && typeof marked !== 'undefined') {
+            contentDiv.innerHTML = marked.parse(text);
+        } else {
+            contentDiv.textContent = text;
+        }
+        
+        // Add timestamp for ai and user messages
+        if (type === 'ai' || type === 'user') {
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'message-timestamp';
+            timestampDiv.textContent = getFormattedTimestamp();
+            messageContainer.appendChild(contentDiv);
+            messageContainer.appendChild(timestampDiv);
+            messageDiv.appendChild(messageContainer);
+        } else {
+            // For system messages, keep it simple
+            messageDiv.appendChild(contentDiv);
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        
+        // Scroll to bottom
+        chatMessages.scrollTop = chatMessages.scrollHeight;
     }
-  
-    // Get explanation for a specific field
-    async function getFieldExplanation(field) {
-      // Try server first if connected
-      if (serverConnected) {
-        try {
-          // Prepare enhanced payload with more context
-          const payload = {
-            question: `What is ${field.label || field.name || 'this field'} for?`,
-            field_context: field,
-            form_context: {
-              form_type: "html_form",
-              fields: detectedFields
+    
+    // Process user message and generate a response
+    function processUserMessage(message) {
+        // In a real implementation, this would call the backend API
+        // For now, just generate a simple response after a delay to simulate thinking
+        setTimeout(() => {
+            hideTypingIndicator();
+            let response;
+            
+            if (message.toLowerCase().includes('what is this form')) {
+                response = "# Form Analysis\n\nThis appears to be a data collection form. I can help you understand what information is being requested.\n\n## Form Purpose\nBased on the fields present, this form is likely used for:\n- Collecting personal information\n- Creating an account or profile\n\nI can help you understand any field in more detail - just click on a field in the left panel to learn more about it.";
             }
-          };
-          
-          // Call regular server
-          const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ASK}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload)
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            console.log('Field explanation from server:', data);
-            return data.response || data.answer;
-          } else {
-            console.warn('Server response not OK:', response.status);
-            // Fall back to local processing
-          }
-        } catch (error) {
-          console.error('Error getting field explanation from server:', error);
-          // Fall back to local processing
-        }
-      }
-      
-      // Fallback to local knowledge base
-      const fieldType = field.type || 'text';
-      const fieldName = field.label || field.name || 'this field';
-      const fieldNameLower = fieldName.toLowerCase();
-      
-      // Check for specific field matches first
-      for (const [key, value] of Object.entries(SPECIFIC_FIELDS)) {
-        if (fieldNameLower.includes(key)) {
-          return value.purpose;
-        }
-      }
-      
-      // Check field type
-      if (FIELD_KNOWLEDGE[fieldType]) {
-        return FIELD_KNOWLEDGE[fieldType].purpose;
-      }
-      
-      // Default explanation
-      return `This field is for entering your ${fieldName.toLowerCase()}. It helps the organization collect the information they need to process your application or request.`;
-    }
-  
-    // Get response to question about specific field
-    function getFieldResponse(field, question) {
-      const questionLower = question.toLowerCase();
-      const fieldType = field.type || 'text';
-      const fieldName = field.label || field.name || 'this field';
-      const fieldNameLower = fieldName.toLowerCase();
-      
-      // Special handling for password fields with context awareness
-      if (fieldType === 'password' || fieldNameLower.includes('password')) {
-        return getPasswordFieldResponse(field, question);
-      }
-      
-      // Find the right knowledge base entry
-      let knowledgeEntry = null;
-      
-      // Check specific fields first
-      for (const [key, value] of Object.entries(SPECIFIC_FIELDS)) {
-        if (fieldNameLower.includes(key)) {
-          knowledgeEntry = value;
-          break;
-        }
-      }
-      
-      // Fall back to field type
-      if (!knowledgeEntry && FIELD_KNOWLEDGE[fieldType]) {
-        knowledgeEntry = FIELD_KNOWLEDGE[fieldType];
-      }
-      
-      // If we have knowledge, determine which aspect they're asking about
-      if (knowledgeEntry) {
-        if (questionLower.includes('what') || questionLower.includes('why') || questionLower.includes('purpose') || questionLower.includes('used for')) {
-          return knowledgeEntry.purpose;
-        } else if (questionLower.includes('format') || questionLower.includes('how')) {
-          return `${knowledgeEntry.format} Examples: ${knowledgeEntry.examples}`;
-        } else if (questionLower.includes('required') || questionLower.includes('need')) {
-          return field.required ? 
-            `Yes, the ${fieldName} field is required and must be filled out.` : 
-            `No, the ${fieldName} field appears to be optional, but it's generally good to provide this information if you can.`;
-        } else if (questionLower.includes('privacy') || questionLower.includes('use')) {
-          return knowledgeEntry.privacy;
-        } else if (questionLower.includes('secure') || questionLower.includes('safe')) {
-          return knowledgeEntry.security;
-        } else if (questionLower.includes('example')) {
-          return `Examples for ${fieldName}: ${knowledgeEntry.examples}`;
-        }
-      }
-      
-      // Field-specific generic response if no knowledge base entry
-      return `The ${fieldName} field is where you enter your ${fieldName.toLowerCase()}. This helps identify you and process your application correctly.`;
+            else if (message.toLowerCase().includes('help')) {
+                response = "# How I Can Help\n\nI can assist you with this form in several ways:\n\n- **Understanding Fields**: Click any field on the left panel to get detailed information\n- **Auto-filling**: Use the \"Auto-fill Form\" button to populate all fields with sample data\n- **Form Guidance**: Ask me any questions about the form's purpose or requirements\n- **Field-specific Help**: I can explain validation requirements and provide suggestions for specific fields\n\nWhat would you like help with today?";
+            }
+            else if (message.toLowerCase().includes('autofill') || message.toLowerCase().includes('fill') || message.toLowerCase().includes('complete')) {
+                response = "# Auto-fill Options\n\nI can help fill out this form for you in a few ways:\n\n1. **Complete Form**: Click the \"Auto-fill Form\" button to fill all fields with sample data\n2. **Use Profile**: Select a saved profile from the dropdown and click \"Auto-fill With Profile\"\n3. **Individual Fields**: Click the \"Fill\" button next to any field to auto-fill just that field\n\nWould you like me to explain any of these options in more detail?";
+            }
+            else if (message.toLowerCase().includes('tell me about')) {
+                // This is a field-specific question
+                let fieldName = message.toLowerCase().replace('tell me about', '').trim();
+                
+                // Find the field
+                const matchingField = formFields.find(field => {
+                    const name = (field.name || '').toLowerCase();
+                    const label = (field.label || '').toLowerCase();
+                    return name.includes(fieldName) || label.includes(fieldName);
+                });
+                
+                if (matchingField) {
+                    getFieldInfo(matchingField);
+                    return; // Early return as getFieldInfo will add the message
+                }
+                
+                // Default response if no matching field
+                response = `I couldn't find a specific field matching "${fieldName}". You can click on any field in the left panel to learn more about it.`;
+            }
+            else {
+                response = "I'm here to help with this form. You can:\n\n- Click on any field in the left panel to learn more about it\n- Ask me about specific fields or form sections\n- Use the \"Auto-fill Form\" button to populate the form with sample data\n- Ask me about form validation requirements\n\nWhat would you like to know more about?";
+            }
+            
+            addMessage('ai', response);
+        }, 1000);
     }
     
-    // Special handler for password fields with context awareness
-    function getPasswordFieldResponse(field, question) {
-      const questionLower = question.toLowerCase();
-      const fieldName = field.label || field.name || 'password field';
-      
-      // If the field already has formType from our enhanced analyzer, use it
-      if (field.formType) {
-        const formContext = field.formType;
-        // Pass through to specific function
-        return generatePasswordResponse(field, question, formContext, fieldName);
-      }
-      
-      // Otherwise do our own detection
-      let formContext = "unknown";
-      
-      // Check if we have form context information
-      if (detectedFields && detectedFields.length > 0) {
-        // Look for indicators of registration vs login
-        const hasConfirmPassword = detectedFields.some(f => {
-          const name = (f.name || '').toLowerCase();
-          const label = (f.label || '').toLowerCase();
-          return (name.includes('confirm') && name.includes('password')) || 
-                 (label.includes('confirm') && label.includes('password'));
-        });
-        
-        const hasTermsCheckbox = detectedFields.some(f => {
-          const name = (f.name || '').toLowerCase();
-          const label = (f.label || '').toLowerCase();
-          return (name.includes('terms') || name.includes('agree')) || 
-                 (label.includes('terms') || label.includes('agree'));
-        });
-        
-        const hasForgotPassword = detectedFields.some(f => {
-          const name = (f.name || '').toLowerCase();
-          const label = (f.label || '').toLowerCase();
-          return name.includes('forgot') || label.includes('forgot password');
-        });
-        
-        if (hasConfirmPassword || hasTermsCheckbox) {
-          formContext = "registration";
-        } else if (hasForgotPassword || (detectedFields.length <= 3)) {
-          formContext = "login";
+    // Auto-fill the form with sample data
+    function autoFillForm() {
+        if (!currentFormData || !currentFormData.formId) {
+            addMessage('system', 'No form available to auto-fill');
+            return;
         }
-      }
-      
-      return generatePasswordResponse(field, question, formContext, fieldName);
+        
+        showTypingIndicator();
+        
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'autoFillForm',
+                    formId: currentFormData.formId
+                }, function(response) {
+                    hideTypingIndicator();
+                    
+                    if (response && response.success) {
+                        addMessage('system', `Auto-filled ${response.count} fields`);
+                        
+                        // Add a success message from the AI
+                        addMessage('ai', `I've filled out ${response.count} fields with sample data. Here's what I did:\n\n- Detected and filled all visible form fields\n- Used contextually appropriate values for each field type\n- Ensured all required fields have values\n\nYou can review and modify any values before submitting the form. Let me know if you'd like to change anything!`);
+                    } else {
+                        addMessage('system', 'Failed to auto-fill the form');
+                    }
+                });
+            }
+        });
     }
     
-    // Helper function to generate password responses based on context and question
-    function generatePasswordResponse(field, question, formContext, fieldName) {
-      const questionLower = question.toLowerCase();
-      const passwordKnowledge = FIELD_KNOWLEDGE.password;
-      
-      // Check for specific questions about the password field
-      if (questionLower.includes('required') || questionLower.includes('need') || 
-          questionLower.includes('must') || questionLower.includes('optional')) {
-        return `Yes, the ${fieldName} is required for security purposes. Password fields must always be completed.`;
-      }
-      
-      if (questionLower.includes('what') || questionLower.includes('why') || 
-          questionLower.includes('purpose') || questionLower.includes('used for')) {
-        if (formContext === "registration") {
-          return passwordKnowledge.registration_context;
-        } else if (formContext === "login") {
-          return passwordKnowledge.login_context;
-        } else {
-          return passwordKnowledge.purpose;
+    // Auto-fill form with profile data
+    function autoFillFormWithProfile(profileId) {
+        if (!currentFormData || !currentFormData.formId || !profiles[profileId]) {
+            addMessage('system', 'Cannot auto-fill: missing form or profile data');
+            return;
         }
-      }
-      
-      if (questionLower.includes('how') || questionLower.includes('format') || 
-          questionLower.includes('many') || questionLower.includes('characters')) {
-        return passwordKnowledge.format;
-      }
-      
-      if (questionLower.includes('strong') || questionLower.includes('secure') || 
-          questionLower.includes('good') || questionLower.includes('strength')) {
-        return passwordKnowledge.strength_guidance;
-      }
-      
-      if (questionLower.includes('safe') || questionLower.includes('security')) {
-        return passwordKnowledge.security;
-      }
-      
-      if (questionLower.includes('privacy') || questionLower.includes('share')) {
-        return passwordKnowledge.privacy;
-      }
-      
-      // Default context-aware response
-      if (formContext === "registration") {
-        return passwordKnowledge.registration_context + " " + passwordKnowledge.strength_guidance;
-      } else if (formContext === "login") {
-        return passwordKnowledge.login_context + " If you've forgotten your password, look for a 'Forgot Password' link near the login form.";
-      } else {
-        return passwordKnowledge.purpose + " " + passwordKnowledge.security;
-      }
+        
+        const profile = profiles[profileId];
+        
+        showTypingIndicator();
+        
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'autoFillWithProfile',
+                    formId: currentFormData.formId,
+                    profile: profile
+                }, function(response) {
+                    hideTypingIndicator();
+                    
+                    if (response && response.success) {
+                        addMessage('system', `Auto-filled form with profile "${profile.name}"`);
+                        
+                        // Add a success message from the AI
+                        addMessage('ai', `I've filled the form using your "${profile.name}" profile. Values were mapped to the appropriate fields based on field names and types. You can review the form before submitting.`);
+                    } else {
+                        addMessage('system', 'Failed to auto-fill with profile');
+                    }
+                });
+            }
+        });
     }
-  
-    // Add message to chat
-    function addChatMessage(sender, text, messageId = null) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `chat-message ${sender}-message`;
-      
-      // Add unique ID if provided
-      if (messageId) {
-        messageDiv.id = messageId;
-      }
-      
-      if (sender === 'ai') {
-        // Format AI messages with simple markdown
-        let formattedText = text;
+    
+    // Highlight a field on the page
+    function highlightField(fieldName) {
+        if (!fieldName) return;
         
-        // Bold: **text** -> <strong>text</strong>
-        formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Italic: *text* -> <em>text</em>
-        formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // Line breaks
-        formattedText = formattedText.replace(/\n/g, '<br>');
-        
-        const textDiv = document.createElement('div');
-        textDiv.className = 'message-text';
-        textDiv.innerHTML = formattedText;
-        messageDiv.appendChild(textDiv);
-      } else if (sender === 'system') {
-        messageDiv.className = 'system-message';
-        messageDiv.textContent = text;
-      } else {
-        messageDiv.textContent = text;
-      }
-      
-      chatContainer.appendChild(messageDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-      
-      return messageDiv;
+        chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+            if (tabs[0]) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    action: 'highlightField',
+                    fieldName: fieldName
+                });
+            }
+        });
     }
+    
+    // Execute fallback command from text input - DEPRECATED
+    /* 
+    Command input functionality has been removed as we're now using the side panel
+    */
+    
+    // Initialize the panel
+    initPanel();
 });

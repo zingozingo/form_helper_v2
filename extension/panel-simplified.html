@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Form Helper</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Simplified UI styles */
+        :root {
+            --primary-color: #4285F4;
+            --secondary-color: #34A853;
+            --border-color: #E0E0E0;
+            --text-color: #212121;
+            --background-color: #FFFFFF;
+            --section-padding: 16px;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        /* Simplified layout */
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Section styling */
+        .section {
+            border-bottom: 1px solid var(--border-color);
+            padding: var(--section-padding);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+        
+        .section-header h2 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .section-content {
+            overflow-y: auto;
+        }
+        
+        /* Fields section */
+        .fields-section {
+            flex: 2;
+            min-height: 200px;
+            max-height: 40vh;
+        }
+        
+        .fields-list {
+            overflow-y: auto;
+            max-height: calc(100% - 30px);
+        }
+        
+        .field-item {
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .field-item:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+        
+        .field-item.active {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+        
+        /* Chat section */
+        .chat-section {
+            flex: 3;
+            display: flex;
+            flex-direction: column;
+            max-height: 40vh;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            background-color: #F5F5F5;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .message {
+            margin-bottom: 8px;
+            display: flex;
+        }
+        
+        .ai-message {
+            color: #212121;
+        }
+        
+        .user-message {
+            justify-content: flex-end;
+        }
+        
+        .message-avatar {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            margin-right: 8px;
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .user-message .message-avatar {
+            background-color: var(--secondary-color);
+            order: 1;
+            margin-right: 0;
+            margin-left: 8px;
+        }
+        
+        .message-content {
+            background-color: white;
+            padding: 8px 12px;
+            border-radius: 18px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            max-width: 80%;
+        }
+        
+        .user-message .message-content {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* Command section */
+        .command-section {
+            padding: var(--section-padding);
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+        }
+        
+        /* Forms */
+        .chat-form {
+            display: flex;
+            margin-top: 8px;
+        }
+        
+        .chat-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            margin-right: 8px;
+        }
+        
+        .chat-form button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        /* Collapsed sections */
+        .collapsed .section-content {
+            display: none;
+        }
+        
+        .section-toggle {
+            transition: transform 0.3s;
+        }
+        
+        .collapsed .section-toggle {
+            transform: rotate(-90deg);
+        }
+        
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            margin-top: 12px;
+            gap: 8px;
+        }
+        
+        .action-button {
+            flex: 1;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
+        
+        .action-button i {
+            margin-right: 6px;
+        }
+        
+        .primary-button {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .secondary-button {
+            background-color: white;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+        
+        /* Profiles accordion */
+        .profiles-accordion {
+            margin-top: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .profiles-header {
+            padding: 8px 12px;
+            background-color: #F5F5F5;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .profiles-content {
+            padding: 12px;
+            display: none;
+        }
+        
+        .profiles-content.expanded {
+            display: block;
+        }
+        
+        /* Help text footer */
+        .helper-footer {
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #757575;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Fields Section -->
+        <div class="section fields-section">
+            <div class="section-header" id="fields-header">
+                <h2>Form Fields <span id="fields-count" class="badge">0</span></h2>
+                <i class="material-icons section-toggle">expand_more</i>
+            </div>
+            <div class="section-content">
+                <div id="fields-list" class="fields-list">
+                    <!-- Fields will be populated here -->
+                    <div class="field-item">
+                        <strong>Email</strong>
+                        <div class="field-details">Required • Type: email</div>
+                    </div>
+                    <div class="field-item active">
+                        <strong>Password</strong>
+                        <div class="field-details">Required • Type: password</div>
+                    </div>
+                    <div class="field-item">
+                        <strong>Confirm Password</strong>
+                        <div class="field-details">Required • Type: password</div>
+                    </div>
+                </div>
+                
+                <!-- Profiles Accordion -->
+                <div class="profiles-accordion">
+                    <div class="profiles-header" id="profiles-header">
+                        <span>Profiles ▾</span>
+                    </div>
+                    <div class="profiles-content" id="profiles-content">
+                        <select id="profile-selector" aria-label="Select profile">
+                            <option value="">Select a profile</option>
+                            <option value="default">Default Profile</option>
+                        </select>
+                        <div class="action-buttons" style="margin-top: 8px;">
+                            <button id="autofill-profile" class="action-button secondary-button">
+                                <i class="material-icons">person</i>
+                                <span>Use Profile</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="autofill-button" class="action-button primary-button">
+                        <i class="material-icons">auto_fix_high</i>
+                        <span>Auto-fill Form</span>
+                    </button>
+                    <button id="clear-button" class="action-button secondary-button">
+                        <i class="material-icons">clear_all</i>
+                        <span>Clear Form</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chat Section -->
+        <div class="section chat-section">
+            <div class="section-header" id="chat-header">
+                <h2>AI Assistant</h2>
+                <i class="material-icons section-toggle">expand_more</i>
+            </div>
+            <div class="section-content">
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Welcome message -->
+                    <div class="message ai-message">
+                        <div class="message-avatar">
+                            <i class="material-icons" style="font-size: 14px;">smart_toy</i>
+                        </div>
+                        <div class="message-content">
+                            Hello! I can help you fill out this form. Select any field or ask me a question.
+                        </div>
+                    </div>
+                </div>
+                <form id="chat-form" class="chat-form">
+                    <input type="text" id="chat-input" placeholder="Ask about this form..." aria-label="Type your message">
+                    <button type="submit" id="send-button" aria-label="Send message">
+                        <i class="material-icons">send</i>
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Command Section -->
+        <div class="command-section">
+            <div class="command-label" style="margin-bottom: 4px; font-size: 12px; color: #757575;">Quick Commands:</div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="command-input" placeholder="Type 'autofill', 'help', or a question..." style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                <button id="command-button" style="background: var(--primary-color); color: white; border: none; border-radius: 4px; padding: 0 12px;">Go</button>
+            </div>
+        </div>
+        
+        <!-- Help Text Footer -->
+        <div class="helper-footer">
+            Click any field for help, or type a question below. Press Alt+A to auto-fill.
+        </div>
+    </div>
+
+    <!-- Load our simplified panel script -->
+    <script src="panel-simple.js"></script>
+</body>
+</html>

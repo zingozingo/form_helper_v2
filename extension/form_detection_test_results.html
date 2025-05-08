@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Detection Test Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      border-bottom: 2px solid #4285f4;
+      padding-bottom: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background-color: #f5f5f5;
+    }
+    tr.legitimate {
+      background-color: #e6f4ea;
+    }
+    tr.excluded {
+      background-color: #fce8e6;
+    }
+    tr.borderline {
+      background-color: #fff8e1;
+    }
+    .score-high {
+      color: #0f9d58;
+      font-weight: bold;
+    }
+    .score-medium {
+      color: #4285f4;
+      font-weight: bold;
+    }
+    .score-low {
+      color: #f4b400;
+      font-weight: bold;
+    }
+    .score-very-low {
+      color: #db4437;
+      font-weight: bold;
+    }
+    .test-details {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-controls {
+      margin-bottom: 20px;
+    }
+    button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .test-form-preview {
+      padding: 10px;
+      border: 1px dashed #ccc;
+      margin-top: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+      background: #f9f9f9;
+    }
+    .threshold-control {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Form Quality Analyzer Test Results</h1>
+  
+  <div class="threshold-control">
+    <h2>Adjust Threshold</h2>
+    <p>Current threshold: <span id="threshold-value">65</span></p>
+    <input type="range" id="threshold-slider" min="0" max="100" value="65" step="5">
+    <button id="apply-threshold">Apply Threshold</button>
+  </div>
+  
+  <div class="test-controls">
+    <h2>Test Controls</h2>
+    <button id="run-tests">Run All Tests</button>
+    <button id="toggle-details">Show/Hide Detailed Scores</button>
+    <button id="export-results">Export Results</button>
+  </div>
+  
+  <div class="test-details">
+    <h2>Test Summary</h2>
+    <p id="test-summary">Click "Run All Tests" to analyze test forms.</p>
+  </div>
+  
+  <table id="results-table">
+    <thead>
+      <tr>
+        <th>Test Case</th>
+        <th>Form ID</th>
+        <th>Expected Result</th>
+        <th>Form Score</th>
+        <th>Form Type</th>
+        <th>Legitimate?</th>
+        <th>Result</th>
+      </tr>
+    </thead>
+    <tbody id="results-body">
+      <!-- Test results will be inserted here -->
+    </tbody>
+  </table>
+  
+  <div id="detailed-scores" style="display: none;">
+    <h2>Detailed Scores</h2>
+    <div id="detailed-scores-content"></div>
+  </div>
+  
+  <script>
+    // Test data - will be populated from the actual test page
+    const testCases = [
+      { 
+        id: 1, 
+        name: "Login Form", 
+        formId: "login-form", 
+        expected: "legitimate", 
+        description: "A standard login form with email/password fields" 
+      },
+      { 
+        id: 2, 
+        name: "Registration Form", 
+        formId: "registration-form", 
+        expected: "legitimate", 
+        description: "A registration form with multiple fields and validation" 
+      },
+      { 
+        id: 3, 
+        name: "Contact Form", 
+        formId: "contact-form", 
+        expected: "legitimate", 
+        description: "A contact form with name, email, subject and message" 
+      },
+      { 
+        id: 4, 
+        name: "Checkout Form", 
+        formId: "checkout-form", 
+        expected: "legitimate", 
+        description: "A complex checkout form with billing and payment information" 
+      },
+      { 
+        id: 5, 
+        name: "Search Box", 
+        formId: "search-form", 
+        expected: "excluded", 
+        description: "A simple search box that should be excluded" 
+      },
+      { 
+        id: 6, 
+        name: "Newsletter Signup", 
+        formId: "newsletter-form", 
+        expected: "excluded", 
+        description: "A newsletter signup form that should be excluded" 
+      },
+      { 
+        id: 7, 
+        name: "Comment Form", 
+        formId: "comment-form", 
+        expected: "excluded", 
+        description: "A comment form that should be excluded" 
+      },
+      { 
+        id: 8, 
+        name: "Chat Interface", 
+        formId: "chat-form", 
+        expected: "excluded", 
+        description: "A chat interface that should be excluded" 
+      },
+      { 
+        id: 9, 
+        name: "Form with No Labels", 
+        formId: "no-labels-form", 
+        expected: "borderline", 
+        description: "A form with no labels, only placeholders" 
+      },
+      { 
+        id: 10, 
+        name: "Form with Hidden Fields", 
+        formId: "hidden-fields-form", 
+        expected: "legitimate", 
+        description: "A form with hidden fields but otherwise legitimate" 
+      }
+    ];
+    
+    // Store test results
+    let testResults = [];
+    let currentThreshold = 65;
+    
+    // Function to initialize test page
+    function init() {
+      document.getElementById('threshold-slider').addEventListener('input', function() {
+        const value = this.value;
+        document.getElementById('threshold-value').textContent = value;
+      });
+      
+      document.getElementById('apply-threshold').addEventListener('click', function() {
+        currentThreshold = parseInt(document.getElementById('threshold-slider').value);
+        // If we have results, re-evaluate them with the new threshold
+        if (testResults.length > 0) {
+          evaluateResults();
+        }
+      });
+      
+      document.getElementById('run-tests').addEventListener('click', runTests);
+      document.getElementById('toggle-details').addEventListener('click', toggleDetails);
+      document.getElementById('export-results').addEventListener('click', exportResults);
+      
+      // Populate the table with test case info
+      const tbody = document.getElementById('results-body');
+      tbody.innerHTML = '';
+      
+      testCases.forEach(test => {
+        const row = document.createElement('tr');
+        row.className = test.expected;
+        row.innerHTML = `
+          <td>${test.id}. ${test.name}</td>
+          <td>${test.formId}</td>
+          <td>${capitalizeFirst(test.expected)}</td>
+          <td id="score-${test.id}">-</td>
+          <td id="type-${test.id}">-</td>
+          <td id="legitimate-${test.id}">-</td>
+          <td id="result-${test.id}">Pending</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+    
+    // Function to run all tests
+    async function runTests() {
+      const summaryEl = document.getElementById('test-summary');
+      summaryEl.textContent = 'Running tests...';
+      
+      // Clear previous results
+      testResults = [];
+      
+      // Open the test page in a frame or new window
+      const testWindow = window.open('test_forms_for_detection.html', 'test_window', 'width=1200,height=800');
+      
+      // Wait for the page to load
+      await new Promise(resolve => {
+        testWindow.onload = resolve;
+      });
+      
+      // Wait for the analyzer to initialize
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // For each test case, analyze the form
+      for (const test of testCases) {
+        const formElement = testWindow.document.getElementById(test.formId);
+        if (!formElement) {
+          console.error(`Form #${test.id} (${test.formId}) not found in test page`);
+          continue;
+        }
+        
+        try {
+          // Extract fields
+          const fields = [];
+          formElement.querySelectorAll('input, select, textarea').forEach(input => {
+            // Skip buttons, hidden fields, etc.
+            if (['submit', 'button', 'image', 'reset'].includes(input.type)) {
+              return;
+            }
+            
+            fields.push({
+              type: input.type || input.tagName.toLowerCase(),
+              name: input.name || '',
+              id: input.id || '',
+              placeholder: input.placeholder || '',
+              required: input.hasAttribute('required'),
+              hasLabel: !!testWindow.document.querySelector(`label[for="${input.id}"]`) || 
+                       !!input.closest('label')
+            });
+          });
+          
+          // Run the analyzer
+          const result = testWindow.formQualityAnalyzer.analyzeForm(formElement, fields, {
+            threshold: currentThreshold
+          });
+          
+          // Store the result
+          testResults.push({
+            testId: test.id,
+            formId: test.formId,
+            expected: test.expected,
+            result: result
+          });
+          
+          // Update the UI
+          updateResultRow(test.id, result);
+        } catch (error) {
+          console.error(`Error analyzing form #${test.id}:`, error);
+        }
+      }
+      
+      // Close the test window
+      testWindow.close();
+      
+      // Evaluate results
+      evaluateResults();
+    }
+    
+    // Function to evaluate all results and show summary
+    function evaluateResults() {
+      if (testResults.length === 0) return;
+      
+      let correctCount = 0;
+      let incorrectCount = 0;
+      
+      testResults.forEach(result => {
+        const expected = result.expected;
+        const actual = result.result.isLegitimateForm ? 'legitimate' : 
+                      (result.result.exclusionReason ? 'excluded' : 'borderline');
+        
+        const isCorrect = (
+          (expected === 'legitimate' && actual === 'legitimate') ||
+          (expected === 'excluded' && actual === 'excluded') ||
+          // For borderline cases, we'll count either legitimate or excluded as correct
+          (expected === 'borderline' && (actual === 'borderline' || 
+                                         result.result.score >= 40))
+        );
+        
+        if (isCorrect) {
+          correctCount++;
+          document.getElementById(`result-${result.testId}`).textContent = 'PASS';
+          document.getElementById(`result-${result.testId}`).style.color = '#0f9d58';
+        } else {
+          incorrectCount++;
+          document.getElementById(`result-${result.testId}`).textContent = 'FAIL';
+          document.getElementById(`result-${result.testId}`).style.color = '#db4437';
+        }
+      });
+      
+      // Update summary
+      const accuracy = (correctCount / testResults.length) * 100;
+      const summaryEl = document.getElementById('test-summary');
+      summaryEl.innerHTML = `
+        <strong>Test completed with threshold: ${currentThreshold}</strong><br>
+        Tests passed: ${correctCount} out of ${testResults.length} (${accuracy.toFixed(1)}% accuracy)<br>
+        Legitimate forms detected: ${testResults.filter(r => r.result.isLegitimateForm).length} out of ${testResults.filter(r => r.expected === 'legitimate').length} expected<br>
+        Excluded forms detected: ${testResults.filter(r => r.result.exclusionReason).length} out of ${testResults.filter(r => r.expected === 'excluded').length} expected
+      `;
+      
+      // Update detailed scores
+      updateDetailedScores();
+    }
+    
+    // Function to update a single result row
+    function updateResultRow(testId, result) {
+      const scoreEl = document.getElementById(`score-${testId}`);
+      const typeEl = document.getElementById(`type-${testId}`);
+      const legitimateEl = document.getElementById(`legitimate-${testId}`);
+      
+      // Update score with color coding
+      let scoreClass = 'score-very-low';
+      if (result.score >= 80) scoreClass = 'score-high';
+      else if (result.score >= 65) scoreClass = 'score-medium';
+      else if (result.score >= 50) scoreClass = 'score-low';
+      
+      scoreEl.innerHTML = `<span class="${scoreClass}">${result.score}</span>`;
+      typeEl.textContent = result.formType || 'Unknown';
+      legitimateEl.textContent = result.isLegitimateForm ? 'Yes' : 'No';
+      
+      if (result.exclusionReason) {
+        legitimateEl.textContent += ` (${formatExclusionReason(result.exclusionReason)})`;
+      }
+    }
+    
+    // Function to update detailed scores section
+    function updateDetailedScores() {
+      const detailedEl = document.getElementById('detailed-scores-content');
+      detailedEl.innerHTML = '';
+      
+      testResults.forEach(result => {
+        const test = testCases.find(t => t.id === result.testId);
+        
+        const detailDiv = document.createElement('div');
+        detailDiv.className = 'test-details';
+        
+        let html = `<h3>Test ${test.id}: ${test.name}</h3>`;
+        
+        // Form preview
+        html += `<div class="test-form-preview">
+          <pre>${escapeHtml(test.description)}</pre>
+        </div>`;
+        
+        // Overall score
+        html += `<p><strong>Overall Score:</strong> ${result.result.score}</p>`;
+        html += `<p><strong>Form Type:</strong> ${result.result.formType}</p>`;
+        html += `<p><strong>Form Purpose:</strong> ${result.result.formPurpose}</p>`;
+        html += `<p><strong>Legitimate:</strong> ${result.result.isLegitimateForm ? 'Yes' : 'No'}</p>`;
+        
+        if (result.result.exclusionReason) {
+          html += `<p><strong>Excluded As:</strong> ${formatExclusionReason(result.result.exclusionReason)}</p>`;
+        }
+        
+        // Detailed scores
+        if (result.result.detailedScores && Object.keys(result.result.detailedScores).length > 0) {
+          html += '<h4>Detailed Scores</h4><table style="width: 100%"><thead><tr>' +
+                  '<th>Factor</th><th>Raw Score</th><th>Weight</th><th>Weighted Score</th>' +
+                  '</tr></thead><tbody>';
+          
+          Object.entries(result.result.detailedScores)
+            .sort((a, b) => b[1].weightedScore - a[1].weightedScore)
+            .forEach(([key, value]) => {
+              html += `<tr>
+                <td>${formatScoreKey(key)}</td>
+                <td>${Math.round(value.rawScore)}</td>
+                <td>${value.weight}</td>
+                <td>${Math.round(value.weightedScore * 10) / 10}</td>
+              </tr>`;
+            });
+          
+          html += '</tbody></table>';
+        }
+        
+        detailDiv.innerHTML = html;
+        detailedEl.appendChild(detailDiv);
+      });
+    }
+    
+    // Helper function to toggle detailed scores
+    function toggleDetails() {
+      const detailsEl = document.getElementById('detailed-scores');
+      detailsEl.style.display = detailsEl.style.display === 'none' ? 'block' : 'none';
+    }
+    
+    // Helper function to export results
+    function exportResults() {
+      if (testResults.length === 0) {
+        alert('No test results to export. Run tests first.');
+        return;
+      }
+      
+      const data = {
+        threshold: currentThreshold,
+        timestamp: new Date().toISOString(),
+        results: testResults.map(r => ({
+          testId: r.testId,
+          testName: testCases.find(t => t.id === r.testId).name,
+          expected: r.expected,
+          score: r.result.score,
+          isLegitimateForm: r.result.isLegitimateForm,
+          formType: r.result.formType,
+          exclusionReason: r.result.exclusionReason,
+          detailedScores: r.result.detailedScores
+        }))
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `form-detection-results-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    
+    // Helper functions
+    function capitalizeFirst(str) {
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+    
+    function formatScoreKey(key) {
+      return key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .trim();
+    }
+    
+    function formatExclusionReason(reason) {
+      switch(reason) {
+        case 'singleSearch': return 'Search Box';
+        case 'singleComment': return 'Comment Field';
+        case 'chatInterface': return 'Chat Interface';
+        case 'newsletterSignup': return 'Newsletter Signup';
+        default: return reason;
+      }
+    }
+    
+    function escapeHtml(html) {
+      const div = document.createElement('div');
+      div.textContent = html;
+      return div.innerHTML;
+    }
+    
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

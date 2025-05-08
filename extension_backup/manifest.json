@@ -1,0 +1,59 @@
+{
+  "manifest_version": 3,
+  "name": "AI Form Helper",
+  "version": "1.0",
+  "description": "An AI-powered assistant for filling out forms with sophisticated form detection",
+  "icons": {
+    "16": "icons/favicon-16x16.png",
+    "32": "icons/favicon-32x32.png",
+    "192": "icons/android-chrome-192x192.png",
+    "512": "icons/android-chrome-512x512.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/favicon-16x16.png",
+      "32": "icons/favicon-32x32.png",
+      "192": "icons/android-chrome-192x192.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "sidePanel"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+        "form_context_detector.js", 
+        "formQualityAnalyzer.js",
+        "content.js"
+      ]
+    }
+  ],
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "test_launcher.html", 
+        "form_detection_test_results.html", 
+        "load_test_forms.js",
+        "reset.css",
+        "styles.css",
+        "fix-layout.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

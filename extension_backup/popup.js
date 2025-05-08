@@ -9,17 +9,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const openPanelButton = document.getElementById('open-panel-button');
     
     // API Configuration
-    const API_URL = 'http://localhost:8000/api/v1/status';
+    const API_URL = 'http://localhost:8000/api/test';
     
     // Default settings
     let appSettings = {
         debugMode: false,
         panelState: {
             collapsed: false
-        },
-        isConnected: false,
-        offlineMode: {
-            enabled: true  // Allow offline functionality
         }
     };
     
@@ -30,17 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
         // Load settings from storage
         loadSettings();
         
-        // Check backend connection after a short delay
-        // This allows the UI to render first
-        setTimeout(() => {
-            checkBackendConnection();
-        }, 100);
+        // Check backend connection
+        checkBackendConnection();
         
         // Set up event listeners
         setupEventListeners();
-        
-        // Add version check and update
-        checkVersionAndUpdate();
     }
     
     // Load settings from storage
@@ -91,19 +81,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Open panel button
         if (openPanelButton) {
             openPanelButton.addEventListener('click', function() {
-                // Open the form helper panel as a popup window instead of side panel
+                // Open the form helper panel
                 chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
                     if (tabs && tabs[0]) {
-                        // Open as a popup window
-                        chrome.windows.create({
-                            url: chrome.runtime.getURL('panel-fixed.html'),
-                            type: 'popup',
-                            width: 400,
-                            height: 600
-                        });
-                        
-                        // Also scan forms on the current page
-                        chrome.tabs.sendMessage(tabs[0].id, {action: 'scanForms'});
+                        chrome.tabs.sendMessage(tabs[0].id, {action: 'openPanel'});
                     }
                 });
                 
@@ -115,28 +96,16 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check backend connection
     function checkBackendConnection() {
-        // Use AbortController to implement a timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);  // 2 second timeout
-        
-        fetch(API_URL, { 
-            signal: controller.signal,
-            // Add cache-busting parameter
-            headers: { 'Cache-Control': 'no-cache' }
-        })
+        fetch(API_URL)
             .then(response => {
-                clearTimeout(timeoutId);
                 if (response.ok) {
                     updateConnectionStatus(true);
                 } else {
-                    console.log('Server responded with status:', response.status);
-                    updateConnectionStatus(false);
+                    throw new Error('Server responded with status: ' + response.status);
                 }
             })
             .catch(error => {
-                clearTimeout(timeoutId);
-                // Don't show error in console, just handle gracefully
-                console.log('Operating in offline mode:', error.name);
+                console.error('Connection error:', error);
                 updateConnectionStatus(false);
             });
     }
@@ -144,43 +113,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update connection status in UI
     function updateConnectionStatus(isConnected) {
         if (statusDot && statusText) {
-            const connectionInfo = document.getElementById('connection-info');
-            
             if (isConnected) {
                 statusDot.className = 'status-dot connected';
                 statusText.textContent = 'Server Connected';
-                // Hide offline mode info
-                if (connectionInfo) connectionInfo.style.display = 'none';
             } else {
                 statusDot.className = 'status-dot disconnected';
                 statusText.textContent = 'Offline Mode';
-                // Show offline mode info
-                if (connectionInfo) connectionInfo.style.display = 'block';
             }
         }
-        
-        // Update app settings with connection status
-        appSettings.isConnected = isConnected;
-        saveSettings();
-    }
-    
-    // Check version and update if needed
-    function checkVersionAndUpdate() {
-        const currentVersion = '1.2.1'; // Update this with each release
-        
-        chrome.storage.local.get(['lastVersion'], function(result) {
-            if (!result.lastVersion || result.lastVersion !== currentVersion) {
-                // Update version
-                chrome.storage.local.set({ lastVersion: currentVersion });
-                
-                // Update version display in UI
-                const versionInfo = document.querySelector('.info-text');
-                if (versionInfo) {
-                    versionInfo.textContent = `AI Form Helper v${currentVersion}`;
-                }
-                
-                console.log(`Updated to version ${currentVersion}`);
-            }
-        });
     }
 });

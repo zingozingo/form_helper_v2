@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Form Helper Test Launcher</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1, h2 {
+      color: #4285f4;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+    button {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+  </style>
+</head>
+<body>
+  <h1>Form Helper Test Launcher</h1>
+  
+  <div class="card">
+    <h2>Form Detection Tests</h2>
+    <p>
+      These tests help verify and calibrate the form detection system. The analysis uses weighted 
+      scoring based on various form quality indicators to determine if a form is legitimate.
+    </p>
+    <button onclick="window.open('../tests/test_data/test_forms_for_detection.html')">Open Test Forms</button>
+    <button onclick="window.open('form_detection_test_results.html')">Open Test Results</button>
+  </div>
+  
+  <div class="card">
+    <h2>Documentation</h2>
+    <p>
+      View documentation on how to run the tests and interpret the results.
+    </p>
+    <button onclick="window.open('form_quality_analyzer_testing.md')">View Testing Guide</button>
+  </div>
+  
+  <div class="card">
+    <h2>Chrome Extension</h2>
+    <p>
+      To test the Form Helper extension with the test forms:
+    </p>
+    <ol>
+      <li>Load the extension in Chrome Developer mode</li>
+      <li>Open the test forms page</li>
+      <li>Observe how the extension detects and scores each form</li>
+      <li>Adjust the threshold in content.js to experiment with detection sensitivity</li>
+    </ol>
+  </div>
+  
+  <script>
+    // Check if the test forms are accessible
+    async function checkTestFormsAccess() {
+      try {
+        const response = await fetch('../tests/test_data/test_forms_for_detection.html', { method: 'HEAD' });
+        if (!response.ok) {
+          alert('Warning: Test forms may not be accessible at the expected path. Please check the file location.');
+        }
+      } catch (e) {
+        console.error('Error checking test forms access:', e);
+      }
+    }
+    
+    // Run check on page load
+    window.addEventListener('DOMContentLoaded', checkTestFormsAccess);
+  </script>
+</body>
+</html>

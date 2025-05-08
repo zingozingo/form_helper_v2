@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Panel Test</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            background: #4285F4;
+            color: white;
+            padding: 10px 20px;
+            position: relative;
+        }
+        .container {
+            margin: 20px;
+            position: relative;
+        }
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .field-pill {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 16px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-btn {
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .test-btn.red {
+            background: #EA4335;
+        }
+        .test-btn.green {
+            background: #34A853;
+        }
+        .test-btn.yellow {
+            background: #FBBC05;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Debug Panel Test</h1>
+    </div>
+    
+    <div class="container">
+        <h2>Test Environment for Debug Panel Integration</h2>
+        
+        <div class="test-section">
+            <h3>Manual Controls</h3>
+            <button class="test-btn" id="init-debug">Initialize Debug Integration</button>
+            <button class="test-btn green" id="show-debug">Show Debug Panel</button>
+            <button class="test-btn red" id="hide-debug">Hide Debug Panel</button>
+            <button class="test-btn yellow" id="toggle-debug">Toggle Debug Panel</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test Form Data</h3>
+            <button class="test-btn" id="load-test-data">Load Test Form Data</button>
+            <button class="test-btn" id="run-detection">Simulate Detection</button>
+            <button class="test-btn" id="reset-data">Reset Data</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Communication Tests</h3>
+            <button class="test-btn" id="test-message">Test Message Passing</button>
+            <button class="test-btn" id="test-integration">Test Integration</button>
+        </div>
+        
+        <h3>Form Field Sample</h3>
+        <div id="field-grid" class="field-grid">
+            <div class="field-pill">
+                <i class="material-icons" style="margin-right: 8px;">person</i>
+                <span>Username</span>
+            </div>
+            <div class="field-pill">
+                <i class="material-icons" style="margin-right: 8px;">lock</i>
+                <span>Password</span>
+            </div>
+            <div class="field-pill">
+                <i class="material-icons" style="margin-right: 8px;">email</i>
+                <span>Email</span>
+            </div>
+        </div>
+        
+        <div id="debug-container">
+            <!-- Debug panel will be inserted here -->
+        </div>
+    </div>
+    
+    <!-- Load scripts -->
+    <script src="field-detector.js"></script>
+    <script src="panel-debug-integration.js"></script>
+    
+    <script>
+        // Initialize fake form data
+        window.currentFormData = {
+            formId: 'test_form_123',
+            formType: 'test',
+            fields: [
+                {
+                    name: 'username',
+                    id: 'username',
+                    type: 'text',
+                    label: 'Username',
+                    required: true,
+                    derivedType: 'username',
+                    confidence: 0.9
+                },
+                {
+                    name: 'password',
+                    id: 'password',
+                    type: 'password',
+                    label: 'Password',
+                    required: true,
+                    derivedType: 'password',
+                    confidence: 0.95
+                },
+                {
+                    name: 'email',
+                    id: 'email',
+                    type: 'email',
+                    label: 'Email',
+                    required: true,
+                    derivedType: 'email',
+                    confidence: 0.85
+                }
+            ]
+        };
+        
+        // Fake display functions
+        window.displayFields = function(fields) {
+            console.log('displayFields called with:', fields);
+        };
+        
+        window.updateFieldCount = function(count) {
+            console.log('updateFieldCount called with:', count);
+        };
+        
+        window.processFormData = function(formData) {
+            console.log('processFormData called with:', formData);
+            return formData;
+        };
+        
+        // Test functions
+        document.getElementById('init-debug').addEventListener('click', function() {
+            console.log('Initializing debug integration');
+            if (window.PanelDebugIntegration) {
+                window.PanelDebugIntegration.initializeDebugIntegration();
+                alert('Debug integration initialized - check console for logs');
+            } else {
+                alert('Error: PanelDebugIntegration not found!');
+            }
+        });
+        
+        document.getElementById('show-debug').addEventListener('click', function() {
+            console.log('Showing debug panel');
+            if (window.PanelDebugIntegration) {
+                window.PanelDebugIntegration.toggleDebugMode(true);
+            } else {
+                alert('Error: PanelDebugIntegration not found!');
+            }
+        });
+        
+        document.getElementById('hide-debug').addEventListener('click', function() {
+            console.log('Hiding debug panel');
+            if (window.PanelDebugIntegration) {
+                window.PanelDebugIntegration.toggleDebugMode(false);
+            } else {
+                alert('Error: PanelDebugIntegration not found!');
+            }
+        });
+        
+        document.getElementById('toggle-debug').addEventListener('click', function() {
+            console.log('Toggling debug panel');
+            if (window.PanelDebugIntegration) {
+                const isActive = window.PanelDebugIntegration.debugModeActive;
+                window.PanelDebugIntegration.toggleDebugMode(!isActive);
+            } else {
+                alert('Error: PanelDebugIntegration not found!');
+            }
+        });
+        
+        document.getElementById('load-test-data').addEventListener('click', function() {
+            console.log('Loading test data');
+            
+            // Generate test form data
+            window.currentFormData = {
+                formId: 'test_form_' + Date.now(),
+                formType: 'registration',
+                fields: [
+                    {
+                        name: 'username',
+                        id: 'username',
+                        type: 'text',
+                        label: 'Username',
+                        required: true,
+                        derivedType: 'username',
+                        confidence: 0.9
+                    },
+                    {
+                        name: 'password',
+                        id: 'password',
+                        type: 'password',
+                        label: 'Password',
+                        required: true,
+                        derivedType: 'password',
+                        confidence: 0.95
+                    },
+                    {
+                        name: 'confirm_password',
+                        id: 'confirm_password',
+                        type: 'password',
+                        label: 'Confirm Password',
+                        required: true,
+                        derivedType: 'confirmPassword',
+                        confidence: 0.9
+                    },
+                    {
+                        name: 'email',
+                        id: 'email',
+                        type: 'email',
+                        label: 'Email Address',
+                        required: true,
+                        derivedType: 'email',
+                        confidence: 0.85
+                    },
+                    {
+                        name: 'first_name',
+                        id: 'first_name',
+                        type: 'text',
+                        label: 'First Name',
+                        required: false,
+                        derivedType: 'firstName',
+                        confidence: 0.8
+                    },
+                    {
+                        name: 'last_name',
+                        id: 'last_name',
+                        type: 'text',
+                        label: 'Last Name',
+                        required: false,
+                        derivedType: 'lastName',
+                        confidence: 0.8
+                    },
+                    {
+                        name: 'terms',
+                        id: 'terms',
+                        type: 'checkbox',
+                        label: 'I agree to the Terms of Service',
+                        required: true,
+                        derivedType: 'terms',
+                        confidence: 0.7
+                    }
+                ]
+            };
+            
+            // Update the panel if active
+            if (window.PanelDebugIntegration && window.PanelDebugIntegration.debugModeActive) {
+                window.PanelDebugIntegration.updateDebugPanelWithFormData(window.currentFormData);
+                alert('Test data loaded and applied to debug panel');
+            } else {
+                alert('Test data loaded. Show debug panel to see it.');
+            }
+        });
+        
+        document.getElementById('run-detection').addEventListener('click', function() {
+            if (window.PanelDebugIntegration) {
+                window.PanelDebugIntegration.requestFieldDetection();
+                alert('Field detection requested');
+            } else {
+                alert('Error: PanelDebugIntegration not found!');
+            }
+        });
+        
+        document.getElementById('reset-data').addEventListener('click', function() {
+            window.currentFormData = null;
+            alert('Form data reset');
+        });
+        
+        document.getElementById('test-message').addEventListener('click', function() {
+            alert('This would test message passing, but requires Chrome extension APIs');
+        });
+        
+        document.getElementById('test-integration').addEventListener('click', function() {
+            if (window.PanelDebugIntegration) {
+                // Force create UI
+                window.PanelDebugIntegration.toggleDebugMode(true);
+                
+                // Check DOM
+                const debugPanel = document.getElementById('debug-panel-container');
+                const toggleButton = document.getElementById('debug-toggle-button');
+                
+                alert(`Integration test results:\n\nDebug Panel: ${debugPanel ? 'Found' : 'NOT FOUND'}\nToggle Button: ${toggleButton ? 'Found' : 'NOT FOUND'}\n\nSee console for more details`);
+                
+                console.log('Integration test results:');
+                console.log('Debug Panel:', debugPanel);
+                console.log('Toggle Button:', toggleButton);
+                console.log('Debug Mode Active:', window.PanelDebugIntegration.debugModeActive);
+                console.log('Current Form Data:', window.currentFormData);
+                
+                if (debugPanel) {
+                    console.log('Debug Panel CSS:');
+                    console.log('display:', debugPanel.style.display);
+                    console.log('visibility:', debugPanel.style.visibility);
+                    console.log('zIndex:', debugPanel.style.zIndex);
+                    console.log('offsetHeight:', debugPanel.offsetHeight);
+                    console.log('clientHeight:', debugPanel.clientHeight);
+                }
+            } else {
+                alert('Error: PanelDebugIntegration not found!');
+            }
+        });
+        
+        // Auto-initialize after page load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                if (window.PanelDebugIntegration) {
+                    console.log('Auto-initializing debug integration');
+                    window.PanelDebugIntegration.initializeDebugIntegration();
+                    
+                    // Auto-show after 2 seconds
+                    setTimeout(function() {
+                        console.log('Auto-showing debug panel');
+                        window.PanelDebugIntegration.toggleDebugMode(true);
+                    }, 2000);
+                } else {
+                    console.error('PanelDebugIntegration not found for auto-init');
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
