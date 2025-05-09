@@ -8,6 +8,7 @@
         :root {
             --primary-color: #4285F4;
             --primary-dark: #3367D6;
+            --primary-light: rgba(66, 133, 244, 0.1);
             --text-color: #333;
             --light-text: #666;
             --very-light-text: #999;
@@ -56,6 +57,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .header h1 {
@@ -100,9 +102,10 @@
             text-align: center;
             font-size: 12px;
             border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
         }
 
-        /* New horizontal fields container */
+        /* Horizontal fields container */
         .fields-container {
             flex-shrink: 0;
             padding: 12px 16px;
@@ -162,13 +165,13 @@
         }
 
         .field-item:hover {
-            background-color: rgba(66, 133, 244, 0.05);
+            background-color: var(--primary-light);
             border-color: var(--primary-color);
             transform: translateY(-2px);
         }
 
         .field-item.selected {
-            background-color: rgba(66, 133, 244, 0.1);
+            background-color: var(--primary-light);
             border-color: var(--primary-color);
             box-shadow: 0 2px 5px rgba(66, 133, 244, 0.2);
         }
@@ -204,34 +207,17 @@
             white-space: nowrap;
         }
 
-        .required-field {
+        .required-badge {
             background-color: var(--error);
             color: var(--white);
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 8px;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 8px;
+            margin-top: 3px;
+            display: inline-block;
         }
 
-        .auto-fill-button {
-            display: block;
-            width: 100%;
-            padding: 8px 16px;
-            background-color: var(--primary-color);
-            color: var(--white);
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .auto-fill-button:hover {
-            background-color: var(--primary-dark);
-        }
-
-        /* Chat section - taking 70% of height */
+        /* Chat section - taking 70% of vertical space */
         .chat-container {
             flex: 1;
             padding: 16px;
@@ -464,7 +450,7 @@
         .action-button.secondary:hover {
             background-color: var(--border-color);
         }
-        
+
         /* Responsive adjustments */
         @media (max-width: 480px) {
             .field-item {
@@ -533,7 +519,7 @@
                 <p id="loader-text">Processing form...</p>
             </div>
             
-            <!-- Fields Section - now horizontal tiles -->
+            <!-- Fields Section - horizontal tiles -->
             <div id="fields-container" class="fields-container" style="display: none;">
                 <h3>Form Fields <span id="field-count">(0)</span></h3>
                 <div id="fields-list" class="fields-list">
@@ -570,6 +556,11 @@
         </div>
     </div>
 
-    <script src="panel.js"></script>
+    <!-- Load optimized bundle -->
+    <script src="../lib/config.js"></script>
+    <script src="../lib/utils.js"></script>
+    <script src="../lib/event-bus.js"></script>
+    <script src="../lib/form-analyzer.js"></script>
+    <script src="../optimized/panel.js"></script>
 </body>
 </html>

@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
 
-    // Create fixed action buttons container (NEW)
+    // Create fixed action buttons container (NEW) - for PDF upload only since we moved Auto-fill to bottom
     const formActionsDiv = document.createElement('div');
     formActionsDiv.className = 'form-actions-fixed';
     formActionsDiv.style.cssText = `
@@ -289,39 +289,28 @@ document.addEventListener('DOMContentLoaded', function() {
       width: 100%;
     `;
     
-    // Add auto-fill button (NEW)
-    const autoFillButton = document.createElement('button');
-    autoFillButton.id = 'autofill-button';
-    autoFillButton.className = 'action-button';
-    autoFillButton.style.cssText = `
-      flex: 1;
-      margin-right: 5px;
-      padding: 10px;
-      background-color: #4285f4;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    `;
-    autoFillButton.textContent = 'Auto-fill All Fields';
-    autoFillButton.addEventListener('click', autoFillAllFields);
-    formActionsDiv.appendChild(autoFillButton);
-    
-    // Add upload PDF button (NEW)
+    // Add upload PDF button only (NEW)
     const uploadPdfFixedButton = document.createElement('button');
     uploadPdfFixedButton.id = 'upload-pdf-fixed-button';
     uploadPdfFixedButton.className = 'action-button secondary';
     uploadPdfFixedButton.style.cssText = `
       flex: 1;
-      margin-left: 5px;
       padding: 10px;
       background-color: #f1f1f1;
       color: #333;
       border: 1px solid #ccc;
       border-radius: 4px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     `;
-    uploadPdfFixedButton.textContent = 'Upload PDF';
+    uploadPdfFixedButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#333" style="margin-right: 8px;">
+        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"></path>
+      </svg>
+      Upload PDF Form
+    `;
     uploadPdfFixedButton.addEventListener('click', triggerPdfUpload);
     formActionsDiv.appendChild(uploadPdfFixedButton);
     
@@ -480,8 +469,37 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         }
         
+        // Set up mutation observer to handle dynamically added elements
+        setupMutationObserver();
+        
         // Request form scan
         requestFormScan();
+    }
+    
+    // Setup mutation observer to handle dynamically added elements
+    function setupMutationObserver() {
+        // Create an observer to watch for added buttons
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                if (mutation.type === 'childList') {
+                    // Check if any autofill-button was added
+                    const addedAutofillButtons = document.querySelectorAll('#autofill-button:not([data-listener])');
+                    if (addedAutofillButtons.length > 0) {
+                        addedAutofillButtons.forEach(button => {
+                            button.addEventListener('click', autoFillAllFields);
+                            button.setAttribute('data-listener', 'true');
+                            console.log('Mutation observer added click handler to Auto-fill button');
+                        });
+                    }
+                }
+            });
+        });
+        
+        // Start observing the entire document
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
     }
 
     // Call the initialization function
@@ -500,14 +518,33 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // Check if backend server is available
+    // Check if backend server is available with improved error handling
     async function checkServerConnection() {
       try {
+        // Use a timeout promise to avoid long waits on connection failure
+        const timeoutPromise = (ms) => new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Timeout')), ms)
+        );
+        
+        // Function to safely fetch with timeout
+        const safeFetch = async (url) => {
+          try {
+            return await Promise.race([
+              fetch(url, { method: 'GET' }),
+              timeoutPromise(3000) // 3 second timeout
+            ]);
+          } catch (err) {
+            // Log without throwing error
+            console.log(`Connection attempt to ${url} failed:`, err.message);
+            return { ok: false };
+          }
+        };
+        
         // Check forms API
-        const formsResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FORMS_DEBUG}`);
+        const formsResponse = await safeFetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FORMS_DEBUG}`);
         
         // Check AI API
-        const aiResponse = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_DEBUG}`);
+        const aiResponse = await safeFetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.AI_DEBUG}`);
         
         // Both need to be available
         serverConnected = formsResponse.ok && aiResponse.ok;
@@ -523,11 +560,11 @@ document.addEventListener('DOMContentLoaded', function() {
             statusDot.classList.remove('connected');
             statusDot.classList.add('disconnected');
             statusText.textContent = 'Server Disconnected';
-            console.log('Server connection failed');
+            console.log('Server disconnected - operating in offline mode');
           }
         }
       } catch (error) {
-        console.error('Error checking server connection:', error);
+        console.log('Error checking server connection:', error.message);
         serverConnected = false;
         
         // Update UI
@@ -568,6 +605,14 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Add message listener for content script
       chrome.runtime.onMessage.addListener(handleMessage);
+      
+      // Set up Auto-fill button - select all buttons with this ID
+      const autofillButtons = document.querySelectorAll('#autofill-button');
+      autofillButtons.forEach(button => {
+        button.removeEventListener('click', autoFillAllFields);
+        button.addEventListener('click', autoFillAllFields);
+        console.log('Added click handler to Auto-fill button:', button);
+      });
       
       // Chat form submission
       if (chatForm) {
@@ -790,52 +835,94 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
   
-    // Display fields in sidebar - MODIFIED to not add buttons inside this container
+    // Display fields as horizontal tiles
     function displayFields(fields) {
       if (!fieldsContainer) return;
       
+      // Clear existing fields
       fieldsContainer.innerHTML = '';
+      
+      // Add field count and title
+      const fieldTitle = document.createElement('h3');
+      fieldTitle.innerHTML = `Form Fields <span id="field-count">(${fields.length})</span>`;
+      fieldsContainer.appendChild(fieldTitle);
+      
+      // Create a container for the fields with horizontal scrolling
+      const fieldsList = document.createElement('div');
+      fieldsList.id = 'fields-list';
+      fieldsList.className = 'fields-list';
+      
+      // Show fields container
       fieldsContainer.style.display = 'block';
       
-      // Create a container for the fields (scrollable)
-      const fieldsList = document.createElement('div');
-      fieldsList.className = 'fields-list';
-      fieldsList.style.cssText = `
-        max-height: 300px;
-        overflow-y: auto;
-        padding-bottom: 10px;
-      `;
+      // Handle no fields case
+      if (!fields || fields.length === 0) {
+        fieldsList.innerHTML = '<div class="no-fields-message">No fields found</div>';
+        fieldsContainer.appendChild(fieldsList);
+        return;
+      }
       
+      // Field type to icon mapping
+      const FIELD_ICONS = {
+        'text': '📝',
+        'email': '📧',
+        'password': '🔒',
+        'tel': '📞',
+        'number': '🔢',
+        'date': '📅',
+        'select': '📋',
+        'checkbox': '☑️',
+        'radio': '⚪',
+        'file': '📎',
+        'textarea': '📄',
+        'url': '🔗',
+        'search': '🔍',
+        'time': '⏰',
+        'color': '🎨',
+        'range': '📊',
+        'default': '📄'
+      };
+      
+      // Create field tiles
       fields.forEach(field => {
-        const fieldItem = document.createElement('div');
-        fieldItem.className = 'field-item';
+        // Create field tile
+        const fieldTile = document.createElement('div');
+        fieldTile.className = 'field-item';
+        fieldTile.setAttribute('role', 'button');
+        fieldTile.setAttribute('aria-label', `${field.label || field.name || 'Unnamed Field'} - ${field.type || 'text'}`);
         
-        // Determine icon based on field type
-        let icon = '📄';
-        if (field.type === 'email') icon = '📧';
-        else if (field.type === 'password') icon = '🔒';
-        else if (field.type === 'tel') icon = '📞';
-        else if (field.type === 'number') icon = '🔢';
-        else if (field.type === 'date') icon = '📅';
-        else if (field.type === 'checkbox') icon = '☑️';
-        else if (field.type === 'radio') icon = '⚪';
-        else if (field.type === 'textarea') icon = '📝';
+        // Get field icon
+        const fieldType = field.type || 'text';
+        const icon = FIELD_ICONS[fieldType] || FIELD_ICONS.default;
         
-        fieldItem.innerHTML = `
+        // Create inner HTML for the tile
+        let tileHTML = `
           <div class="field-icon">${icon}</div>
           <div class="field-details">
-            <div class="field-label">${field.label || field.name || 'Unnamed Field'}</div>
-            <div class="field-type">${field.type || 'text'} ${field.required ? '(required)' : ''}</div>
-          </div>
+            <div class="field-label" title="${field.label || field.name || 'Unnamed Field'}">${field.label || field.name || 'Unnamed Field'}</div>
+            <div class="field-type" title="${field.type || 'text'}">${field.type || 'text'}</div>
         `;
         
-        // Add click handler to select and highlight field
-        fieldItem.addEventListener('click', function() {
-          // Update UI to show selected field
+        // Add required badge if needed
+        if (field.required) {
+          tileHTML += `<span class="required-badge">Required</span>`;
+        }
+        
+        // Close field details div
+        tileHTML += `</div>`;
+        
+        // Set the inner HTML
+        fieldTile.innerHTML = tileHTML;
+        
+        // Add click handler
+        fieldTile.addEventListener('click', function() {
+          // Remove selected class from all tiles
           document.querySelectorAll('.field-item').forEach(el => {
             el.classList.remove('selected');
           });
-          fieldItem.classList.add('selected');
+          
+          // Add selected class to clicked tile
+          fieldTile.classList.add('selected');
           
           // Set current field context
           currentFieldContext = field;
@@ -844,6 +931,21 @@ document.addEventListener('DOMContentLoaded', function() {
           if (!isProcessingPdf) {
             highlightField(field.name || field.id || field.element);
           }
+          
+          // Add message to chat
+          const fieldName = field.label || field.name || 'this field';
+          addChatMessage('user', `What is ${fieldName} for?`);
+          
+          // Get field explanation
+          getFieldInfo(field);
+        });
+        
+        // Add to fields list
+        fieldsList.appendChild(fieldTile);
+      });
+      
+      // Add fields list to container
+      fieldsContainer.appendChild(fieldsList);
           
           // Add message to chat
           const fieldName = field.label || field.name || 'this field';

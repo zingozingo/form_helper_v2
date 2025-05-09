@@ -16,6 +16,9 @@
       "192": "icons/android-chrome-192x192.png"
     }
   },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' http://localhost:8000 http://127.0.0.1:8000"
+  },
   "permissions": [
     "activeTab",
     "scripting",
@@ -35,6 +38,6 @@
     }
   ],
   "side_panel": {
-    "default_path": "panel.html"
+    "default_path": "panel-fixed.html"
   }
 }
